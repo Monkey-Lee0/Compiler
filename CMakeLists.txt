@@ -7,7 +7,11 @@ add_executable(Compiler
     src/main.cpp
     src/lexer.cpp
     src/token.cpp
-    src/AST.h
+        src/AST.h
     src/lexer.h
     src/token.h
+        src/parser.cpp
+        src/parser.h
+        src/type.h
+        src/ast.cpp
 )

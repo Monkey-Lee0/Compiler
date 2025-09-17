@@ -79,25 +79,25 @@ token lexer::peek() const
         return (token){tokenType::ILLEGAL,""};
     int trial=matchCharLiteral(newPos);
     if(trial!=-1)
-        return (token){tokenType::CHAR_LITERAL,code.substr(pos+1,trial-pos-2)};
+        return (token){tokenType::CHAR_LITERAL,code.substr(newPos+1,trial-newPos-2)};
     trial=matchStringLiteral(newPos);
     if(trial!=-1)
-        return (token){tokenType::STRING_LITERAL,code.substr(pos+1,trial-pos-2)};
+        return (token){tokenType::STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
     trial=matchIntegerLiteral(newPos);
     if(trial!=-1)
-        return (token){tokenType::INTEGER_LITERAL,code.substr(pos,trial-pos)};
+        return (token){tokenType::INTEGER_LITERAL,code.substr(newPos,trial-newPos)};
     trial=matchFloatLiteral(newPos);
     if(trial!=-1)
-        return (token){tokenType::FLOAT_LITERAL,code.substr(pos,trial-pos)};
+        return (token){tokenType::FLOAT_LITERAL,code.substr(newPos,trial-newPos)};
     trial=matchKeyword(newPos);
     if(trial!=-1)
-        return (token){tokenType::KEYWORD,code.substr(pos,trial-pos)};
+        return (token){tokenType::KEYWORD,code.substr(newPos,trial-newPos)};
     trial=matchOperator(newPos);
     if(trial!=-1)
-        return (token){tokenType::OPERATOR,code.substr(pos,trial-pos)};
+        return (token){tokenType::OPERATOR,code.substr(newPos,trial-newPos)};
     trial=matchIdentifier(newPos);
     if(trial!=-1)
-        return (token){tokenType::IDENTIFIER,code.substr(pos,trial-pos)};
+        return (token){tokenType::IDENTIFIER,code.substr(newPos,trial-newPos)};
     return {tokenType::ILLEGAL,""};
 }
 
@@ -110,56 +110,56 @@ token lexer::expect(const tokenType& type) const
     {
         const int trial=matchCharLiteral(newPos);
         if(trial!=-1)
-            return (token){tokenType::CHAR_LITERAL,code.substr(pos+1,trial-pos-2)};
+            return (token){tokenType::CHAR_LITERAL,code.substr(newPos+1,trial-newPos-2)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::RAW_STRING_LITERAL)
     {
         const int trial=matchRawStringLiteral(newPos);
         if(trial!=-1)
-            return (token){tokenType::RAW_STRING_LITERAL,code.substr(pos+1,trial-pos-2)};
+            return (token){tokenType::RAW_STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::STRING_LITERAL)
     {
         const int trial=matchStringLiteral(newPos);
         if(trial!=-1)
-            return (token){tokenType::STRING_LITERAL,code.substr(pos+1,trial-pos-2)};
+            return (token){tokenType::STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::INTEGER_LITERAL)
     {
         const int trial=matchIntegerLiteral(newPos);
         if(trial!=-1)
-            return (token){tokenType::CHAR_LITERAL,code.substr(pos,trial-pos)};
+            return (token){tokenType::CHAR_LITERAL,code.substr(newPos,trial-newPos)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::FLOAT_LITERAL)
     {
         const int trial=matchFloatLiteral(newPos);
         if(trial!=-1)
-            return (token){tokenType::FLOAT_LITERAL,code.substr(pos,trial-pos)};
+            return (token){tokenType::FLOAT_LITERAL,code.substr(newPos,trial-newPos)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::KEYWORD)
     {
         const int trial=matchKeyword(newPos);
         if(trial!=-1)
-            return (token){tokenType::KEYWORD,code.substr(pos,trial-pos)};
+            return (token){tokenType::KEYWORD,code.substr(newPos,trial-newPos)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::OPERATOR)
     {
         const int trial=matchOperator(newPos);
         if(trial!=-1)
-            return (token){tokenType::OPERATOR,code.substr(pos,trial-pos)};
+            return (token){tokenType::OPERATOR,code.substr(newPos,trial-newPos)};
         return {tokenType::ILLEGAL,""};
     }
     if(type==tokenType::IDENTIFIER)
     {
         const int trial=matchIdentifier(newPos);
         if(trial!=-1)
-            return (token){tokenType::IDENTIFIER,code.substr(pos,trial-pos)};
+            return (token){tokenType::IDENTIFIER,code.substr(newPos,trial-newPos)};
         return {tokenType::ILLEGAL,""};
     }
     return {tokenType::ILLEGAL,""};
@@ -499,3 +499,5 @@ int lexer::matchIdentifier(int pos) const
         pos++;
     return pos;
 }
+
+bool lexer::checkEnd() const {return matchWhitespace(pos)==code.size();}

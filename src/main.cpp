@@ -1,5 +1,5 @@
 #include<bits/stdc++.h>
-#include"lexer.h"
+#include"parser.h"
 using namespace std;
 int main()
 {
@@ -9,16 +9,12 @@ int main()
     while((in=cin.get())!=EOF)
         code.push_back(static_cast<char>(in));
     code.push_back('\n');
-    lexer lexer_(code);
+    auto par=parser(code);
     try
     {
-        while(true)
-        {
-            auto t=lexer_.consume();
-            if(t.type==tokenType::ILLEGAL)
-                break;
-            std::cout<<t<<std::endl;
-        }
+        auto res=par.solve()->showTree();
+        for (auto t:res)
+                std::cout<<t<<std::endl;
     }
     catch(...)
     {

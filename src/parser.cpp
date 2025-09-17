@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <algorithm>
 
 parser::parser():src(""){}
 
@@ -215,12 +216,255 @@ void parser::appendLetStatement(astNode* node)
         throw compileError();
 }
 
+static bool isPrefixOperend(const token& t)
+{
+    return
+        (t.type == tokenType::OPERATOR && t.value == "+") ||
+        (t.type == tokenType::OPERATOR && t.value == "-") ||
+        (t.type == tokenType::OPERATOR && t.value == "~");
+}
+static bool isItem(const token& t)
+{
+    return
+        t.type == tokenType::CHAR_LITERAL ||
+        t.type == tokenType::STRING_LITERAL ||
+        t.type == tokenType::INTEGER_LITERAL ||
+        t.type == tokenType::FLOAT_LITERAL ||
+        t.type == tokenType::RAW_STRING_LITERAL ||
+        (t.type == tokenType::KEYWORD && (t.value == "false" || t.value == "true")) ||
+        t.type == tokenType::IDENTIFIER;
+}
+static bool isInfixOperand(const token &t)
+{
+    return
+        (t.type == tokenType::OPERATOR && t.value == "+") ||
+        (t.type == tokenType::OPERATOR && t.value == "-") ||
+        (t.type == tokenType::OPERATOR && t.value == "*") ||
+        (t.type == tokenType::OPERATOR && t.value == "/") ||
+        (t.type == tokenType::OPERATOR && t.value == "%") ||
+        (t.type == tokenType::OPERATOR && t.value == "<<") ||
+        (t.type == tokenType::OPERATOR && t.value == ">>") ||
+        (t.type == tokenType::OPERATOR && t.value == "&") ||
+        (t.type == tokenType::OPERATOR && t.value == "^") ||
+        (t.type == tokenType::OPERATOR && t.value == "|") ||
+        (t.type == tokenType::OPERATOR && t.value == "==") ||
+        (t.type == tokenType::OPERATOR && t.value == "!=") ||
+        (t.type == tokenType::OPERATOR && t.value == "<") ||
+        (t.type == tokenType::OPERATOR && t.value == ">") ||
+        (t.type == tokenType::OPERATOR && t.value == "<=") ||
+        (t.type == tokenType::OPERATOR && t.value == ">=") ||
+        (t.type == tokenType::OPERATOR && t.value == "&&") ||
+        (t.type == tokenType::OPERATOR && t.value == "||") ||
+        (t.type == tokenType::OPERATOR && t.value == "=") ||
+        (t.type == tokenType::OPERATOR && t.value == "+=") ||
+        (t.type == tokenType::OPERATOR && t.value == "-=") ||
+        (t.type == tokenType::OPERATOR && t.value == "*=") ||
+        (t.type == tokenType::OPERATOR && t.value == "/=") ||
+        (t.type == tokenType::OPERATOR && t.value == "%=") ||
+        (t.type == tokenType::OPERATOR && t.value == "&=") ||
+        (t.type == tokenType::OPERATOR && t.value == "|=") ||
+        (t.type == tokenType::OPERATOR && t.value == "^=") ||
+        (t.type == tokenType::OPERATOR && t.value == "<<=") ||
+        (t.type == tokenType::OPERATOR && t.value == ">>=") ||
+        (t.type == tokenType::KEYWORD && t.value == "as");
+}
+static int getPrecedence(const token& t)
+{
+    if (t.type == tokenType::KEYWORD && t.value == "as")
+        return 1000;
+    if (t.type == tokenType::OPERATOR && (t.value == "*" || t.value == "/" || t.value =="%"))
+        return 990;
+    if (t.type == tokenType::OPERATOR && (t.value == "+" || t.value == "-"))
+        return 980;
+    if (t.type == tokenType::OPERATOR && (t.value == "<<" || t.value == ">>"))
+        return 970;
+    if (t.type == tokenType::OPERATOR && t.value == "&")
+        return 960;
+    if (t.type == tokenType::OPERATOR && t.value == "^")
+        return 950;
+    if (t.type == tokenType::OPERATOR && t.value == "|")
+        return 940;
+    if (t.type == tokenType::OPERATOR && (t.value == "==" || t.value == "!=" || t.value =="<"||
+        t.value == ">" || t.value == "<=" || t.value ==">="))
+        return 930;
+    if (t.type == tokenType::OPERATOR && t.value == "&&")
+        return 920;
+    if (t.type == tokenType::OPERATOR && t.value == "||")
+        return 910;;
+    if (t.type == tokenType::OPERATOR && (t.value == "=" || t.value == "+=" || t.value =="-="||
+        t.value == "*=" || t.value == "/=" || t.value == "%=" || t.value == "&=" || t.value == "|=" ||
+        t.value == "^=" || t.value == "<<=" || t.value == ">>="))
+        return 900;
+    return -1;
+}
+static astNode* createPrefix(const token &t)
+{
+    auto newNode = new astNode;
+    if (t.type == tokenType::IDENTIFIER &&
+        (t.value == "i32" || t.value == "u32" || t.value == "isize" || t.value == "usize"))
+    {
+        newNode -> type = astNodeType::TYPE;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::IDENTIFIER)
+    {
+        newNode -> type = astNodeType::IDENTIFIER;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::OPERATOR)
+    {
+        newNode -> type = astNodeType::UNARY_OPERATOR;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::CHAR_LITERAL)
+    {
+        newNode -> type = astNodeType::CHAR_LITERAL;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::STRING_LITERAL)
+    {
+        newNode -> type = astNodeType::STRING_LITERAL;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::INTEGER_LITERAL)
+    {
+        newNode -> type = astNodeType::INTEGER_LITERAL;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::FLOAT_LITERAL)
+    {
+        newNode -> type = astNodeType::FLOAT_LITERAL;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::RAW_STRING_LITERAL)
+    {
+        newNode -> type = astNodeType::RAW_STRING_LITERAL;
+        newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::KEYWORD && (t.value == "true" || t.value == "false"))
+    {
+        newNode -> type = astNodeType::BOOL_LITERAL;
+        newNode -> value = t.value;
+    }
+    return newNode;
+}
+static astNode* createInfix(const token &t)
+{
+    auto newNode = new astNode;
+    if (t.type == tokenType::OPERATOR || (t.type == tokenType::KEYWORD && t.value == "as"))
+    {
+        newNode -> type = astNodeType::BINARY_OPERATOR;
+        newNode -> value = t.value;
+    }
+    return newNode;
+}
+static astNode* parseExp(std::vector<token> &tokens, const int precedence)
+{
+    astNode* node = nullptr;
+    while (true)
+    {
+        if (tokens.empty())
+            throw compileError();
+        auto prefix=tokens.back();tokens.pop_back();
+        if (prefix.type == tokenType::OPERATOR && prefix.value == "(")
+        {
+            auto newNode = parseExp(tokens,0);
+            if (tokens.empty() || tokens.back().type != tokenType::OPERATOR || tokens.back().value != ")")
+                throw compileError();
+            tokens.pop_back();
+            if (node != nullptr)
+                node -> children.push_back(newNode);
+            else
+                node = newNode;
+            break;
+        }
+        auto newNode = createPrefix(prefix);
+        if (node != nullptr)
+            node -> children.push_back(newNode);
+        else
+            node = newNode;
+        if (isItem(prefix))
+            break;
+        if (!isPrefixOperend(prefix))
+            throw compileError();
+    }
+
+    while (true)
+    {
+        if (tokens.empty())
+            break;
+        auto infix=tokens.back();
+        if (!isInfixOperand(infix))
+            break;
+        auto newNode = createInfix(infix);
+        const auto prec = getPrecedence(infix);
+        if (prec <= precedence)
+            break;
+        tokens.pop_back();
+        newNode -> children.push_back(node);
+        node = newNode;
+        node -> children.push_back(parseExp(tokens, prec));
+    }
+    return node;
+}
 void parser::appendExpressionStatement(astNode* node)
 {
     node->type=astNodeType::EXPRESSION_STATEMENT;
 
-    std::cerr<<"I'm always trying to do so!"<<std::endl;
-    throw compileError();
+    // get all tokens
+    std::vector<token> tokens;
+    while (true)
+    {
+        auto tk=src.consume();
+        if (tk.type == tokenType::ILLEGAL)
+            throw compileError();
+        if (tk.type == tokenType::OPERATOR && tk.value == ";")
+            break;
+        tokens.push_back(tk);
+    }
+    if (tokens.empty())
+        throw compileError();
+
+    std::reverse(tokens.begin(),tokens.end());
+
+    // break statement
+    if (tokens.back().type == tokenType::KEYWORD && tokens.back().value == "break")
+    {
+        if (tokens.size() > 1)
+            throw compileError();
+        auto newNode=new astNode;
+        newNode->type = astNodeType::BREAK;
+        node->children.push_back(newNode);
+        return ;
+    }
+
+    // continue statement
+    if (tokens.back().type == tokenType::KEYWORD && tokens.back().value == "continue")
+    {
+        if (tokens.size() > 1)
+            throw compileError();
+        auto newNode=new astNode;
+        newNode->type = astNodeType::CONTINUE;
+        node->children.push_back(newNode);
+        return ;
+    }
+
+    // return statement
+    if (tokens.back().type == tokenType::KEYWORD && tokens.back().value == "return")
+    {
+        auto newNode=new astNode;
+        newNode->type = astNodeType::RETURN;
+        node->children.push_back(newNode);
+        if (tokens.size() == 1)
+            return ;
+        tokens.pop_back();
+        node=newNode;
+    }
+
+    // pratt parser for complicated expression
+    node->children.push_back(parseExp(tokens, 0));
+    if (!tokens.empty())
+        throw compileError();
 }
 
 astNode* parser::solve()

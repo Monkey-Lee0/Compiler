@@ -13,7 +13,7 @@ int main()
     try
     {
         auto res=par.solve()->showTree();
-        for (auto t:res)
+        for (const auto& t:res)
                 std::cout<<t<<std::endl;
     }
     catch(...)

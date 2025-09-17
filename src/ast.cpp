@@ -34,6 +34,39 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::TYPED_IDENTIFIER:
             res.back() = "typed identifier";
             break;
+        case astNodeType::BREAK:
+            res.back() = "break";
+            break;
+        case astNodeType::CONTINUE:
+            res.back() = "continue";
+            break;
+        case astNodeType::RETURN:
+            res.back() = "return";
+            break;
+        case astNodeType::UNARY_OPERATOR:
+            res.back() = "unary operator";
+            break;
+        case astNodeType::BINARY_OPERATOR:
+            res.back() = "binary operator";
+            break;
+        case astNodeType::CHAR_LITERAL:
+            res.back() = "char literal";
+            break;
+        case astNodeType::STRING_LITERAL:
+            res.back() = "string literal";
+            break;
+        case astNodeType::INTEGER_LITERAL:
+            res.back() = "integer literal";
+            break;
+        case astNodeType::FLOAT_LITERAL:
+            res.back() = "float literal";
+            break;
+        case astNodeType::RAW_STRING_LITERAL:
+            res.back() = "raw string literal";
+            break;
+        case astNodeType::BOOL_LITERAL:
+            res.back() = "bool literal";
+            break;
         default:
             ;
     }

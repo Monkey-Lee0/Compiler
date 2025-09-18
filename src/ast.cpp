@@ -25,6 +25,9 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::EXPRESSION_STATEMENT:
             res.back() = "expression statement";
             break;
+        case astNodeType::GROUP_EXPRESSION:
+            res.back() = "group expression";
+            break;
         case astNodeType::TYPE:
             res.back() = "type";
             break;
@@ -43,11 +46,35 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::RETURN:
             res.back() = "return";
             break;
+        case astNodeType::RETURN_CUR:
+            res.back() = "return current";
+            break;
+        case astNodeType::LOOP:
+            res.back() = "loop";
+            break;
+        case astNodeType::WHILE:
+            res.back() = "while";
+            break;
+        case astNodeType::IF:
+            res.back() = "if";
+            break;
+        case astNodeType::ELSE:
+            res.back() = "else";
+            break;
         case astNodeType::UNARY_OPERATOR:
             res.back() = "unary operator";
             break;
         case astNodeType::BINARY_OPERATOR:
             res.back() = "binary operator";
+            break;
+        case astNodeType::FUNCTION_CALL:
+            res.back() = "function call";
+            break;
+        case astNodeType::ARRAY_INDEX:
+            res.back() = "array index";
+            break;
+        case astNodeType::ARRAY_BUILD:
+            res.back() = "array build";
             break;
         case astNodeType::CHAR_LITERAL:
             res.back() = "char literal";

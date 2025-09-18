@@ -18,56 +18,56 @@ token lexer::consume()
     {
         const auto res=(token){tokenType::CHAR_LITERAL,code.substr(pos+1,trial-pos-2)};
         pos=trial;
-        return res;
+        return previous=res;
     }
     trial=matchRawStringLiteral(pos);
     if(trial!=-1)
     {
         const auto res=(token){tokenType::RAW_STRING_LITERAL,code.substr(pos+1,trial-pos-2)};
         pos=trial;
-        return res;
+        return previous=res;
     }
     trial=matchStringLiteral(pos);
     if(trial!=-1)
     {
         const auto res=(token){tokenType::STRING_LITERAL,code.substr(pos+1,trial-pos-2)};
         pos=trial;
-        return res;
-    }
-    trial=matchIntegerLiteral(pos);
-    if(trial!=-1)
-    {
-        const auto res=(token){tokenType::INTEGER_LITERAL,code.substr(pos,trial-pos)};
-        pos=trial;
-        return res;
+        return previous=res;
     }
     trial=matchFloatLiteral(pos);
     if(trial!=-1)
     {
         const auto res=(token){tokenType::FLOAT_LITERAL,code.substr(pos,trial-pos)};
         pos=trial;
-        return res;
+        return previous=res;
+    }
+    trial=matchIntegerLiteral(pos);
+    if(trial!=-1)
+    {
+        const auto res=(token){tokenType::INTEGER_LITERAL,code.substr(pos,trial-pos)};
+        pos=trial;
+        return previous=res;
     }
     trial=matchKeyword(pos);
-    if(trial!=-1)
+    if(trial!=-1 && (trial == code.size() || !(isLetter(code[trial])||isDecLiteral(code[trial])||code[trial]=='_')))
     {
         const auto res=(token){tokenType::KEYWORD,code.substr(pos,trial-pos)};
         pos=trial;
-        return res;
+        return previous=res;
     }
     trial=matchOperator(pos);
     if(trial!=-1)
     {
         const auto res=(token){tokenType::OPERATOR,code.substr(pos,trial-pos)};
         pos=trial;
-        return res;
+        return previous=res;
     }
     trial=matchIdentifier(pos);
     if(trial!=-1)
     {
         const auto res=(token){tokenType::IDENTIFIER,code.substr(pos,trial-pos)};
         pos=trial;
-        return res;
+        return previous=res;
     }
     return {tokenType::ILLEGAL,""};
 }
@@ -83,14 +83,14 @@ token lexer::peek() const
     trial=matchStringLiteral(newPos);
     if(trial!=-1)
         return (token){tokenType::STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
-    trial=matchIntegerLiteral(newPos);
-    if(trial!=-1)
-        return (token){tokenType::INTEGER_LITERAL,code.substr(newPos,trial-newPos)};
     trial=matchFloatLiteral(newPos);
     if(trial!=-1)
         return (token){tokenType::FLOAT_LITERAL,code.substr(newPos,trial-newPos)};
-    trial=matchKeyword(newPos);
+    trial=matchIntegerLiteral(newPos);
     if(trial!=-1)
+        return (token){tokenType::INTEGER_LITERAL,code.substr(newPos,trial-newPos)};
+    trial=matchKeyword(newPos);
+    if(trial!=-1 && (trial == code.size() || !(isLetter(code[trial])||isDecLiteral(code[trial])||code[trial]=='_')))
         return (token){tokenType::KEYWORD,code.substr(newPos,trial-newPos)};
     trial=matchOperator(newPos);
     if(trial!=-1)
@@ -101,68 +101,20 @@ token lexer::peek() const
     return {tokenType::ILLEGAL,""};
 }
 
-token lexer::expect(const tokenType& type) const
+token lexer::expect(const token& exp)
 {
-    const int newPos=matchWhitespace(pos);
-    if(newPos==code.size()||type==tokenType::ILLEGAL)
-        return (token){tokenType::ILLEGAL,""};
-    if(type==tokenType::CHAR_LITERAL)
-    {
-        const int trial=matchCharLiteral(newPos);
-        if(trial!=-1)
-            return (token){tokenType::CHAR_LITERAL,code.substr(newPos+1,trial-newPos-2)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::RAW_STRING_LITERAL)
-    {
-        const int trial=matchRawStringLiteral(newPos);
-        if(trial!=-1)
-            return (token){tokenType::RAW_STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::STRING_LITERAL)
-    {
-        const int trial=matchStringLiteral(newPos);
-        if(trial!=-1)
-            return (token){tokenType::STRING_LITERAL,code.substr(newPos+1,trial-newPos-2)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::INTEGER_LITERAL)
-    {
-        const int trial=matchIntegerLiteral(newPos);
-        if(trial!=-1)
-            return (token){tokenType::CHAR_LITERAL,code.substr(newPos,trial-newPos)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::FLOAT_LITERAL)
-    {
-        const int trial=matchFloatLiteral(newPos);
-        if(trial!=-1)
-            return (token){tokenType::FLOAT_LITERAL,code.substr(newPos,trial-newPos)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::KEYWORD)
-    {
-        const int trial=matchKeyword(newPos);
-        if(trial!=-1)
-            return (token){tokenType::KEYWORD,code.substr(newPos,trial-newPos)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::OPERATOR)
-    {
-        const int trial=matchOperator(newPos);
-        if(trial!=-1)
-            return (token){tokenType::OPERATOR,code.substr(newPos,trial-newPos)};
-        return {tokenType::ILLEGAL,""};
-    }
-    if(type==tokenType::IDENTIFIER)
-    {
-        const int trial=matchIdentifier(newPos);
-        if(trial!=-1)
-            return (token){tokenType::IDENTIFIER,code.substr(newPos,trial-newPos)};
-        return {tokenType::ILLEGAL,""};
-    }
-    return {tokenType::ILLEGAL,""};
+    const auto curToken=consume();
+    if (curToken != exp)
+        throw compileError();
+    return curToken;
+}
+
+token lexer::expect(const tokenType& exp)
+{
+    const auto curToken=consume();
+    if (curToken.type != exp)
+        throw compileError();
+    return curToken;
 }
 
 int lexer::matchWhitespace(int pos) const
@@ -202,10 +154,12 @@ int lexer::matchWhitespace(int pos) const
     return pos;
 }
 
-int lexer::matchSingleChar(int pos) const
+int lexer::matchSingleChar(int pos,bool singleQuote=false) const
 {
     if(pos==code.size())
         return -1;
+    if (singleQuote && code[pos] == '\'')
+        return pos+1;
     if(code[pos]!='\''&&code[pos]!='\\')
         return pos+1;
     if(pos+1<code.size()&&code[pos]=='\\'&&(code[pos+1]=='\''||code[pos+1]=='\"'||code[pos+1]=='n'||code[pos+1]=='r'
@@ -244,12 +198,16 @@ int lexer::matchStringLiteral(int pos) const
         if(code[pos]=='\"')
             return pos+1;
         int prePos=pos;
-        pos=matchSingleChar(pos);
+        pos=matchSingleChar(pos,true);
     }
 }
 
 int lexer::matchIntegerLiteral(int pos) const
 {
+    if(pos==code.size())
+        return -1;
+    if (code[pos]=='-')
+        pos++;
     if(pos==code.size())
         return -1;
     if(code[pos]=='0'&&pos+1<code.size())
@@ -313,15 +271,20 @@ int lexer::matchIntegerLiteral(int pos) const
 
 int lexer::matchFloatLiteral(int pos) const
 {
-    if(pos==code.size()||!isBinLiteral(code[pos]))
+    return -1;
+    if(pos==code.size())
+        return -1;
+    if (code[pos]=='-')
+        pos++;
+    if(pos==code.size()||!isDecLiteral(code[pos]))
         return -1;
     pos++;
-    while(pos!=code.size()&&(isBinLiteral(code[pos])||code[pos]=='_'))
+    while(pos!=code.size()&&(isDecLiteral(code[pos])||code[pos]=='_'))
         pos++;
     if(pos==code.size()||code[pos]!='.')
         return -1;
     pos++;
-    while(pos!=code.size()&&(isBinLiteral(code[pos])||code[pos]=='_'))
+    while(pos!=code.size()&&(isDecLiteral(code[pos])||code[pos]=='_'))
         pos++;
     return pos;
 }

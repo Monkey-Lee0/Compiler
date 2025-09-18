@@ -6,7 +6,7 @@
 class lexer
 {
     int matchWhitespace(int) const;
-    int matchSingleChar(int) const;
+    int matchSingleChar(int,bool) const;
     int matchCharLiteral(int) const;
     int matchRawStringLiteral(int) const;
     int matchStringLiteral(int) const;
@@ -17,11 +17,13 @@ class lexer
     int matchIdentifier(int) const;
 public:
     std::string code;
+    token previous;
     int pos;
     explicit lexer(const std::string&);
     token consume();
     token peek() const;
-    token expect(const tokenType&) const;
+    token expect(const token&);
+    token expect(const tokenType&);
     bool checkEnd() const;
 };
 

@@ -16,6 +16,8 @@ class token
 public:
     tokenType type;
     std::string value;
+    friend bool operator==(const token &a,const token &b){return a.type==b.type && a.value==b.value;}
+    friend bool operator!=(const token &a,const token &b){return !(a==b);}
 };
 
 std::ostream& operator<<(std::ostream&,const token&);

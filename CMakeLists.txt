@@ -12,6 +12,5 @@ add_executable(Compiler
     src/token.h
         src/parser.cpp
         src/parser.h
-        src/type.h
         src/ast.cpp
 )

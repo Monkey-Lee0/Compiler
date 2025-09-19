@@ -10,17 +10,32 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::PROGRAM:
             res.back() = "program";
             break;
+        case astNodeType::STRUCT:
+            res.back() = "struct";
+            break;
+        case astNodeType::FIELDS:
+            res.back() = "fields";
+            break;
+        case astNodeType::FIELD:
+            res.back() = "field";
+            break;
         case astNodeType::FUNCTION:
             res.back() = "function";
             break;
         case astNodeType::PARAMETERS:
             res.back() = "parameters";
             break;
+        case astNodeType::QUANTIFIER:
+            res.back() = "quantifier";
+            break;
         case astNodeType::STATEMENT_BLOCK:
             res.back() = "statement block";
             break;
         case astNodeType::LET_STATEMENT:
             res.back() = "let statement";
+            break;
+        case astNodeType::CONST_STATEMENT:
+            res.back() = "const statement";
             break;
         case astNodeType::EXPRESSION_STATEMENT:
             res.back() = "expression statement";
@@ -34,8 +49,20 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::IDENTIFIER:
             res.back() = "identifier";
             break;
-        case astNodeType::TYPED_IDENTIFIER:
-            res.back() = "typed identifier";
+        case astNodeType::ENUM:
+            res.back() = "enum";
+            break;
+        case astNodeType::ENUM_MEMBERS:
+            res.back() = "enum members";
+            break;
+        case astNodeType::IMPL:
+            res.back() = "impl";
+            break;
+        case astNodeType::TRAIT:
+            res.back() = "trait";
+            break;
+        case astNodeType::ASSOCIATED_ITEM:
+            res.back() = "associated item";
             break;
         case astNodeType::BREAK:
             res.back() = "break";
@@ -72,6 +99,9 @@ std::vector<std::string> astNode::showSelf()
             break;
         case astNodeType::ARRAY_INDEX:
             res.back() = "array index";
+            break;
+        case astNodeType::STRUCT_BUILD:
+            res.back() = "struct build";
             break;
         case astNodeType::ARRAY_BUILD:
             res.back() = "array build";

@@ -64,7 +64,7 @@ bool isNumberB(const Type& T){return isNumber(T) || T == BOOL;}
 bool isChar(const Type& T){return T == CHAR || T == STR || T == STRING;}
 
 scopeInfo findScope(const std::pair<Scope*,astNode*> &scope, const std::string &name)
-{
+{;
     auto res = scope.first->get(name);
     if (res.type != ILLEGAL || scope.second == nullptr)
         return res;
@@ -186,7 +186,25 @@ void resolveDependency(astNode* node)
     for (int i=0; i<G.size(); i++)
         node->children[i]=mp[name[seq[i]]];
 
-    // resolve function dependcy
+    //resolve constant dependency
+    for (auto child:node->children)
+        if (child->type == astNodeType::CONST_STATEMENT)
+        {
+            updateType(child->children[0], nullptr);
+            child->children[1]->scope = child->scope;
+            updateType(child->children[1], nullptr);
+            auto T0 = *child->children[0]->realType.typePtr, T1 = child->children[1]->realType;
+            if (T0 != T1)
+                deriveNumberType(T0, T1);
+            if (!child->children[1]->eval.has_value())
+                throw compileError();
+            scopeInfo value = {T0, child->children[1]->eval, false, true};
+            if (findScope(child->scope, child->value).isGlobal) // shadow a constant.
+                throw compileError();
+            child->scope.first->set(child->value, value);
+        }
+
+    // resolve function dependency
     for (auto child:node->children)
         if (child->type == astNodeType::FUNCTION)
         {
@@ -197,10 +215,12 @@ void resolveDependency(astNode* node)
             for (auto id:child->children[0]->children)
             {
                 auto& T0=*id->children[0]->realType.typePtr;
-                child->scope.first->set(id->value, {T0, std::any(), false});
+                child->scope.first->set(id->value, {T0, std::any(), false, false});
                 T.members.push_back(&T0);
             }
-            node->scope.first->set(child->value, {T, std::any(), false});
+            if (findScope(child->scope, child->value).isGlobal) // shadow a constant.
+                throw compileError();
+            node->scope.first->set(child->value, {T, std::any(), false, true});
         }
 }
 
@@ -218,17 +238,7 @@ void updateType(astNode* node, astNode* father)
     for (auto child:node->children)
         updateType(child, node);
 
-    if (node->type == astNodeType::CONST_STATEMENT)
-    {
-        auto T0 = *node->children[0]->realType.typePtr, T1 = node->children[1]->realType;
-        if (T0 != T1)
-            deriveNumberType(T0, T1);
-        if (!node->children[1]->eval.has_value())
-            throw compileError();
-        scopeInfo value = {T0, node->children[1]->eval,     false};
-        node->scope.first->set(node->value, value);
-    }
-    else if (node->type == astNodeType::LET_STATEMENT)
+    if (node->type == astNodeType::LET_STATEMENT)
     {
         auto T0 = *node->children[1]->realType.typePtr;
         if (node->children.size() == 3)
@@ -237,8 +247,8 @@ void updateType(astNode* node, astNode* father)
             if (T0 != T1)
                 deriveNumberType(T0, T1);
         }
-        scopeInfo value = {T0, std::any(), node->children[0]->value == "mut"};
-        if (findScope(node->scope, node->value).eval.has_value()) // shadow a constant.
+        scopeInfo value = {T0, std::any(), node->children[0]->value == "mut", false};
+        if (findScope(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
         node->scope.first->set(node->value, value);
     }

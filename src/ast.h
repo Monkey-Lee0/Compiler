@@ -35,6 +35,7 @@ public:
     Type type;
     std::any eval;
     bool isMutable;
+    bool isGlobal;
 };
 
 class Scope final

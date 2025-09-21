@@ -202,7 +202,7 @@ std::vector<std::string> astNode::showTree()
 scopeInfo Scope::get(const std::string& name)
 {
     if (!table.contains(name))
-        return {Type(TypeName::ILLEGAL), std::any(), false};
+        return {Type(TypeName::ILLEGAL), std::any(), false, false};
     return table[name];
 }
 void Scope::set(const std::string& name, const scopeInfo& value){table[name] = value;}

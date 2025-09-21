@@ -121,6 +121,8 @@ void parser::appendType(astNode *node)
     }
     else if (tk.type == tokenType::IDENTIFIER)
         node->value = tk.value;
+    else if (tk == (token){tokenType::KEYWORD, "Self"})
+        node->value = "Self";
     else
         throw compileError();
 }
@@ -130,16 +132,32 @@ void parser::appendParameters(astNode *node)
     node->type=astNodeType::PARAMETERS;
 
     auto tk=src.peek();
+    bool flag=true;
     if (tk.type == tokenType::KEYWORD && tk.value == "self")
     {
-        std::cerr<<"Oh, how can this be possible?"<<std::endl;
+        std::cerr<<"hillo"<<std::endl;
         src.consume();
+        flag = false;
+        auto newNode = new astNode;
+        newNode -> type = astNodeType::SELF;
+        node -> children.push_back(newNode);
+
+        auto newType = new astNode;
+        newType -> type = astNodeType::TYPE;
+        newNode->children.push_back(newType);
+        if (src.peek() == (token){tokenType::OPERATOR, ":"})
+        {
+            src.consume();
+            appendType(newType);
+        }
+        else
+            newType -> value = "Self";
+
         tk=src.peek();
-        if (tk.type == tokenType::KEYWORD && tk.value == ",")
-            src.consume(),tk=src.peek();
+        if (tk.type == tokenType::OPERATOR && tk.value == ",")
+            src.consume(),tk=src.peek(),flag = true;
     }
 
-    bool flag=true;
     while (tk.type == tokenType::IDENTIFIER)
     {
         if (!flag)
@@ -275,7 +293,8 @@ static bool isItem(const token& t)
         t.type == tokenType::INTEGER_LITERAL ||
         t.type == tokenType::FLOAT_LITERAL ||
         t.type == tokenType::RAW_STRING_LITERAL ||
-        (t.type == tokenType::KEYWORD && (t.value == "false" || t.value == "true")) ||
+        (t.type == tokenType::KEYWORD && (t.value == "false" || t.value == "true" ||
+            t.value == "self" || t.value == "Self")) ||
         t.type == tokenType::IDENTIFIER;
 }
 static bool isInfixOperand(const token &t)
@@ -356,7 +375,8 @@ static astNode* createPrefix(const token &t)
 {
     auto newNode = new astNode;
     if (t.type == tokenType::IDENTIFIER &&
-        (t.value == "i32" || t.value == "u32" || t.value == "isize" || t.value == "usize"))
+        (t.value == "i32" || t.value == "u32" || t.value == "isize" || t.value == "usize" || t.value == "bool" ||
+            t.value == "char" || t.value == "str" || t.value == "String"))
     {
         newNode -> type = astNodeType::TYPE;
         newNode -> value = t.value;
@@ -400,6 +420,13 @@ static astNode* createPrefix(const token &t)
     {
         newNode -> type = astNodeType::BOOL_LITERAL;
         newNode -> value = t.value;
+    }
+    else if (t.type == tokenType::KEYWORD && t.value == "self")
+        newNode -> type = astNodeType::SELF;
+    else if (t.type == tokenType::KEYWORD && t.value == "Self")
+    {
+        newNode -> type = astNodeType::TYPE;
+        newNode -> value = "Self";
     }
     return newNode;
 }

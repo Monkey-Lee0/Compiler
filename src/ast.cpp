@@ -124,12 +124,49 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::BOOL_LITERAL:
             res.back() = "bool literal";
             break;
+        case astNodeType::SELF:
+            res.back() = "self";
+            break;
         default:
             ;
     }
 
     if (!value.empty())
         res.back().append(" : "+value);
+    if (realType.name != TypeName::ILLEGAL)
+        res.back().append("   type:"+realType.to_string());
+    if (eval.has_value())
+    {
+        res.back().append("   eval:");
+        if (eval.type() == typeid(long long))
+        {
+            auto R=std::any_cast<long long>(eval);
+            if (realType == Type(TypeName::U32) || realType == Type(TypeName::USIZE) ||
+                realType == Type(TypeName::UINT))
+                R=static_cast<unsigned int>(R);
+            else
+                R=static_cast<int>(R);
+            res.back().append(std::to_string(R));
+        }
+        else if (eval.type() == typeid(bool))
+        {
+            auto R=std::any_cast<bool>(eval);
+            if (R == true)
+                res.back().append("true");
+            else
+                res.back().append("false");
+        }
+        else if (eval.type() == typeid(char))
+        {
+            auto R=std::any_cast<char>(eval);
+            if (R <= 31)
+                res.back().append(std::to_string(R));
+            else if (R==32)
+                res.back().append("(space)");
+            else
+                res.back().push_back(R);
+        }
+    }
     return res;
 }
 
@@ -157,4 +194,21 @@ std::vector<std::string> astNode::showTree()
     }
 
     return res;
+}
+
+Type Scope::getType(const std::string& name)
+{
+    if (table.contains(name))
+        return Type(TypeName::ILLEGAL);
+    return *table[name].first;
+}
+std::any Scope::getEval(const std::string& name)
+{
+    if (table.contains(name))
+        return std::any();
+    return table[name].second;
+}
+void Scope::set(const std::string& name, Type* T, const std::any& Eval)
+{
+    table[name] = std::make_pair(T, Eval);
 }

@@ -1,5 +1,6 @@
 #include<bits/stdc++.h>
 #include"parser.h"
+#include"type.h"
 using namespace std;
 int main()
 {
@@ -12,7 +13,9 @@ int main()
     auto par=parser(code);
     try
     {
-        auto res=par.solve()->showTree();
+        auto root=par.solve();
+        semanticCheckType(root);
+        auto res=root->showTree();
         for (const auto& t:res)
                 std::cout<<t<<std::endl;
     }

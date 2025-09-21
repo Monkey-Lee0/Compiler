@@ -226,6 +226,14 @@ int lexer::matchIntegerLiteral(int pos) const
             }
             if(!has)
                 return -1;
+            if (pos+3<=code.size() && code.substr(pos,3) == "i32")
+                return pos+3;
+            if (pos+3<=code.size() && code.substr(pos,3) == "u32")
+                return pos+3;
+            if (pos+5<=code.size() && code.substr(pos,5) == "isize")
+                return pos+5;
+            if (pos+5<=code.size() && code.substr(pos,5) == "usize")
+                return pos+5;
             return pos;
         }
         if(code[pos+1]=='o')
@@ -242,6 +250,14 @@ int lexer::matchIntegerLiteral(int pos) const
             }
             if(!has)
                 return -1;
+            if (pos+3<=code.size() && code.substr(pos,3) == "i32")
+                return pos+3;
+            if (pos+3<=code.size() && code.substr(pos,3) == "u32")
+                return pos+3;
+            if (pos+5<=code.size() && code.substr(pos,5) == "isize")
+                return pos+5;
+            if (pos+5<=code.size() && code.substr(pos,5) == "usize")
+                return pos+5;
             return pos;
         }
         if(code[pos+1]=='x')
@@ -258,6 +274,14 @@ int lexer::matchIntegerLiteral(int pos) const
             }
             if(!has)
                 return -1;
+            if (pos+3<=code.size() && code.substr(pos,3) == "i32")
+                return pos+3;
+            if (pos+3<=code.size() && code.substr(pos,3) == "u32")
+                return pos+3;
+            if (pos+5<=code.size() && code.substr(pos,5) == "isize")
+                return pos+5;
+            if (pos+5<=code.size() && code.substr(pos,5) == "usize")
+                return pos+5;
             return pos;
         }
     }
@@ -266,6 +290,14 @@ int lexer::matchIntegerLiteral(int pos) const
     pos++;
     while(pos!=code.size()&&(code[pos]=='_'||isOctLiteral(code[pos])))
         pos++;
+    if (pos+3<=code.size() && code.substr(pos,3) == "i32")
+        return pos+3;
+    if (pos+3<=code.size() && code.substr(pos,3) == "u32")
+        return pos+3;
+    if (pos+5<=code.size() && code.substr(pos,5) == "isize")
+        return pos+5;
+    if (pos+5<=code.size() && code.substr(pos,5) == "usize")
+        return pos+5;
     return pos;
 }
 

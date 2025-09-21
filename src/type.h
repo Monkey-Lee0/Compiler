@@ -30,9 +30,9 @@ const auto UNIT_T = Type(TypeName::TYPE, &UNIT, -1);
 
 struct Unit{};
 
-Type findScope(const std::pair<Scope*, astNode*>&, const std::string &name);
+scopeInfo findScope(const std::pair<Scope*, astNode*>&, const std::string &name);
 
-void updateType(astNode*);
+void updateType(astNode*, astNode*);
 
 bool checkAsTrans(const Type&, const Type&);
 

@@ -29,13 +29,20 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Type&);
 };
 
+class scopeInfo final
+{
+public:
+    Type type;
+    std::any eval;
+    bool isMutable;
+};
+
 class Scope final
 {
-    std::unordered_map<std::string, std::pair<Type*, std::any>> table;
+    std::unordered_map<std::string, scopeInfo> table;
 public:
-    Type getType(const std::string&);
-    std::any getEval(const std::string&);
-    void set(const std::string&, Type*, const std::any&);
+    scopeInfo get(const std::string&);
+    void set(const std::string&, const scopeInfo&);
 };
 
 enum class astNodeType

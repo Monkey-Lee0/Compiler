@@ -228,13 +228,10 @@ void parser::appendLetStatement(astNode* node)
     else
         quant->value="const";
 
-    auto newNode=new astNode;
-    newNode->type=astNodeType::IDENTIFIER;
-    newNode->value=src.expect(tokenType::IDENTIFIER).value;
-    node->children.push_back(newNode);
+    node->value=src.expect(tokenType::IDENTIFIER).value;
 
     src.expect({tokenType::OPERATOR, ":"});
-    newNode=new astNode;
+    auto newNode=new astNode;
     appendType(newNode);
     node->children.push_back(newNode);
 
@@ -256,26 +253,18 @@ void parser::appendConstStatement(astNode* node)
 
     src.expect({tokenType::KEYWORD, "const"});
 
-    auto newNode=new astNode;
-    newNode->type=astNodeType::IDENTIFIER;
-    newNode->value=src.expect(tokenType::IDENTIFIER).value;
-    node->children.push_back(newNode);
+    node->value=src.expect(tokenType::IDENTIFIER).value;
 
     src.expect({tokenType::OPERATOR, ":"});
-    newNode=new astNode;
+    auto newNode=new astNode;
     appendType(newNode);
     node->children.push_back(newNode);
 
-    auto tk=src.consume();
-    if (tk == (token){tokenType::OPERATOR, "="})
-    {
-        newNode=new astNode;
-        appendSimpleExpression(newNode);
-        node->children.push_back(newNode);
-        src.expect({tokenType::OPERATOR, ";"});
-    }
-    else if (tk.type != tokenType::OPERATOR || tk.value != ";")
-        throw compileError();
+    src.expect({tokenType::OPERATOR, "="});
+    newNode=new astNode;
+    appendSimpleExpression(newNode);
+    node->children.push_back(newNode);
+    src.expect({tokenType::OPERATOR, ";"});
 }
 
 static bool isPrefixOperend(const token& t)

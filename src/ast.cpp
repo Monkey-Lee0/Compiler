@@ -49,6 +49,9 @@ std::vector<std::string> astNode::showSelf()
         case astNodeType::IDENTIFIER:
             res.back() = "identifier";
             break;
+        case astNodeType::TYPED_IDENTIFIER:
+            res.back() = "typed identifier";
+            break;
         case astNodeType::ENUM:
             res.back() = "enum";
             break;
@@ -196,19 +199,10 @@ std::vector<std::string> astNode::showTree()
     return res;
 }
 
-Type Scope::getType(const std::string& name)
+scopeInfo Scope::get(const std::string& name)
 {
-    if (table.contains(name))
-        return Type(TypeName::ILLEGAL);
-    return *table[name].first;
+    if (!table.contains(name))
+        return {Type(TypeName::ILLEGAL), std::any(), false};
+    return table[name];
 }
-std::any Scope::getEval(const std::string& name)
-{
-    if (table.contains(name))
-        return std::any();
-    return table[name].second;
-}
-void Scope::set(const std::string& name, Type* T, const std::any& Eval)
-{
-    table[name] = std::make_pair(T, Eval);
-}
+void Scope::set(const std::string& name, const scopeInfo& value){table[name] = value;}

@@ -1,6 +1,6 @@
 #include "type.h"
 
-#include <bits/chrono.h>
+#include<algorithm>
 
 #include "token.h"
 
@@ -25,6 +25,7 @@ std::ostream& operator<<(std::ostream& os, const Type& T){return os<<T.to_string
 
 std::string Type::to_string() const
 {
+    std::string res="(";
     switch (name)
     {
         case TypeName::ILLEGAL: return "ILLEGAL";
@@ -43,6 +44,15 @@ std::string Type::to_string() const
         case TypeName::ENUM: return "(enum)" + structName;
         case TypeName::ARRAY: return "[" + typePtr->to_string()+";"+std::to_string(len)+"]";
         case TypeName::STRUCT: return "(struct)" + structName;
+        case TypeName::FUNCTION:
+            for (int i=0;i<members.size();i++)
+            {
+                res.append(members[i]->to_string());
+                if (i+1 != members.size())
+                    res.append(",");
+            }
+            res.append(")->" + typePtr->to_string());
+            return res;
         case TypeName::TYPE: return typePtr->to_string()+"_T";
         default: return "who are you?";
     }
@@ -53,13 +63,11 @@ bool isNumber(const Type& T){return T == I32 || T == U32 || T == ISIZE || T == U
 bool isNumberB(const Type& T){return isNumber(T) || T == BOOL;}
 bool isChar(const Type& T){return T == CHAR || T == STR || T == STRING;}
 
-Type findScope(const std::pair<Scope*,astNode*> &scope, const std::string &name)
+scopeInfo findScope(const std::pair<Scope*,astNode*> &scope, const std::string &name)
 {
-    auto res = scope.first->req(name);
-    if (res != ILLEGAL)
+    auto res = scope.first->get(name);
+    if (res.type != ILLEGAL || scope.second == nullptr)
         return res;
-    if (scope.second == nullptr)
-        return ILLEGAL;
     return findScope(scope.second->scope, name);
 }
 
@@ -123,18 +131,118 @@ void deriveNumberType(Type& A, Type &B)
         throw compileError();
 }
 
-void updateType(astNode* node)
+void resolveDependency(astNode* node)
+{
+    std::vector<std::string> name;
+    for (const auto child:node->children)
+        name.push_back(child->value);
+    std::unordered_map<std::string, astNode*> mp;
+    std::ranges::sort(name);
+    std::vector<std::vector<int>> G;
+    std::vector<int> d;
+    G.resize(node->children.size(),{});
+    d.resize(node->children.size(), 0);
+    for (const auto child:node->children)
+        mp[child->value]=child;
+    for (const auto child:node->children)
+    {
+        std::vector<astNode*> S;
+        if (child->type == astNodeType::FUNCTION)
+            S.emplace_back(child->children[2]);
+        else if (child->type == astNodeType::CONST_STATEMENT)
+            S.emplace_back(child->children[1]);
+        int X=std::ranges::lower_bound(name, child->value)-name.begin();
+        while (!S.empty())
+        {
+            auto x=*S.back();S.pop_back();
+            if (x.type == astNodeType::IDENTIFIER)
+            {
+                int Y=std::ranges::lower_bound(name, x.value)-name.begin();
+                if (Y != name.size() && name[Y] == x.value && mp[name[Y]]->type != astNodeType::FUNCTION)
+                    G[Y].push_back(X), d[X]++;
+            }
+            for (auto c:x.children)
+                S.emplace_back(c);
+        }
+    }
+    std::vector<int> e;
+    std::vector<int> seq;
+    for (int i=0; i < G.size(); i++)
+        if (!d[i])
+            e.push_back(i);
+    while (!e.empty())
+    {
+        auto x=e.back();e.pop_back();
+        seq.push_back(x);
+        for (auto t:G[x])
+        {
+            d[t]--;
+            if (!d[t])
+                e.push_back(t);
+        }
+    }
+    if (seq.size() != G.size())
+        throw compileError();
+    for (int i=0; i<G.size(); i++)
+        node->children[i]=mp[name[seq[i]]];
+
+    // resolve function dependcy
+    for (auto child:node->children)
+        if (child->type == astNodeType::FUNCTION)
+        {
+            updateType(child->children[0], nullptr);
+            updateType(child->children[1], nullptr);
+            Type T(TypeName::FUNCTION, child->children[1]->realType.typePtr, -1);
+            child->scope = std::make_pair(new Scope(), node);
+            for (auto id:child->children[0]->children)
+            {
+                auto& T0=*id->children[0]->realType.typePtr;
+                child->scope.first->set(id->value, {T0, std::any(), false});
+                T.members.push_back(&T0);
+            }
+            node->scope.first->set(child->value, {T, std::any(), false});
+        }
+}
+
+void updateType(astNode* node, astNode* father)
 {
     if (node->realType != ILLEGAL)
         return ;
+    if (node->type == astNodeType::PROGRAM || node->type == astNodeType::STATEMENT_BLOCK)
+        node->scope = std::make_pair(new Scope(), father);
     for (auto child:node->children)
-        updateType(child);
+        child->scope = node->scope;
     if (node->type == astNodeType::PROGRAM)
-    {
-        node->scope = std::make_pair(new Scope(), nullptr);
+        resolveDependency(node);
 
+    for (auto child:node->children)
+        updateType(child, node);
+
+    if (node->type == astNodeType::CONST_STATEMENT)
+    {
+        auto T0 = *node->children[0]->realType.typePtr, T1 = node->children[1]->realType;
+        if (T0 != T1)
+            deriveNumberType(T0, T1);
+        if (!node->children[1]->eval.has_value())
+            throw compileError();
+        scopeInfo value = {T0, node->children[1]->eval,     false};
+        node->scope.first->set(node->value, value);
     }
-    if (node->type == astNodeType::BINARY_OPERATOR)
+    else if (node->type == astNodeType::LET_STATEMENT)
+    {
+        auto T0 = *node->children[1]->realType.typePtr;
+        if (node->children.size() == 3)
+        {
+            auto T1 = node->children[2]->realType;
+            if (T0 != T1)
+                deriveNumberType(T0, T1);
+        }
+        scopeInfo value = {T0, std::any(), node->children[0]->value == "mut"};
+        if (findScope(node->scope, node->value).eval.has_value()) // shadow a constant.
+            throw compileError();
+        node->scope.first->set(node->value, value);
+    }
+    else if (node->type == astNodeType::BINARY_OPERATOR)
     {
         auto T0 = node->children[0]->realType, T1  = node->children[1]->realType;
         auto E0 = node->children[0]->eval, E1  = node->children[1]->eval;
@@ -336,7 +444,6 @@ void updateType(astNode* node)
         {
             T1 = *T1.typePtr;
             checkAsTrans(T0, T1);
-            std::cerr<<T1<<std::endl;
             node->realType = T1;
             if (E0.has_value())
             {
@@ -353,6 +460,11 @@ void updateType(astNode* node)
     }
     else if (node->type == astNodeType::IDENTIFIER)
     {
+        auto R=findScope(node->scope, node->value);
+        if (R.type == ILLEGAL)
+            throw compileError();
+        node->eval = R.eval;
+        node->realType = R.type;
     }
     else if (node->type == astNodeType::TYPE)
     {
@@ -374,6 +486,8 @@ void updateType(astNode* node)
             node->realType = STRING_T;
         else if (node->value == "()")
             node->realType = UNIT_T;
+        else
+            throw compileError();
     }
     else if (node->type == astNodeType::BOOL_LITERAL)
     {
@@ -478,6 +592,16 @@ void updateType(astNode* node)
             throw compileError();
         node->realType = *T0.typePtr;
     }
+    else if (node->type == astNodeType::FUNCTION_CALL)
+    {
+        auto FT=node->children[0]->realType;
+        if (FT.name != TypeName::FUNCTION || FT.members.size() != node->children[1]->children.size())
+            throw compileError();
+        for (int i=0; i<FT.members.size(); i++)
+            if (*FT.members[i] != node->children[1]->children[i]->realType)
+                throw compileError();
+        node->realType = *FT.typePtr;
+    }
 }
 
-void semanticCheckType(astNode* node){updateType(node);}
+void semanticCheckType(astNode* node){updateType(node, nullptr);}

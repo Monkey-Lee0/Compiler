@@ -8,7 +8,7 @@ Type::Type():name(TypeName::ILLEGAL), typePtr(nullptr), len(-1){}
 
 Type::Type(const TypeName& A):name(A), typePtr(nullptr), len(-1){}
 
-Type::Type(const TypeName& A, const Type* B, const int& C):name(A), typePtr(B), len(C){}
+Type::Type(const TypeName& A, Type* B, const unsigned int& C):name(A), typePtr(B), len(C){}
 
 bool operator==(const Type& A, const Type& B)
 {
@@ -131,6 +131,18 @@ void deriveNumberType(Type& A, Type &B)
         throw compileError();
 }
 
+void deriveAllType(Type& A, Type& B)
+{
+    if (A.name == TypeName::ARRAY || B.name == TypeName::ARRAY)
+    {
+        if (A.name != B.name || A.len != B.len)
+            throw compileError();
+        deriveAllType(*A.typePtr, *B.typePtr);
+    }
+    if (A != B)
+        deriveNumberType(A, B);
+}
+
 void resolveDependency(astNode* node)
 {
     std::vector<std::string> name;
@@ -147,10 +159,8 @@ void resolveDependency(astNode* node)
     for (const auto child:node->children)
     {
         std::vector<astNode*> S;
-        if (child->type == astNodeType::FUNCTION)
-            S.emplace_back(child->children[2]);
-        else if (child->type == astNodeType::CONST_STATEMENT)
-            S.emplace_back(child->children[1]);
+        for (auto c:child->children)
+            S.emplace_back(c);
         int X=std::ranges::lower_bound(name, child->value)-name.begin();
         while (!S.empty())
         {
@@ -190,12 +200,12 @@ void resolveDependency(astNode* node)
     for (auto child:node->children)
         if (child->type == astNodeType::CONST_STATEMENT)
         {
+            child->children[0]->scope = child->scope;
             updateType(child->children[0], nullptr);
             child->children[1]->scope = child->scope;
             updateType(child->children[1], nullptr);
             auto T0 = *child->children[0]->realType.typePtr, T1 = child->children[1]->realType;
-            if (T0 != T1)
-                deriveNumberType(T0, T1);
+            deriveAllType(T0, T1);
             if (!child->children[1]->eval.has_value())
                 throw compileError();
             scopeInfo value = {T0, child->children[1]->eval, false, true};
@@ -208,6 +218,7 @@ void resolveDependency(astNode* node)
     for (auto child:node->children)
         if (child->type == astNodeType::FUNCTION)
         {
+            child->children[0]->scope = child->scope;
             updateType(child->children[0], nullptr);
             updateType(child->children[1], nullptr);
             Type T(TypeName::FUNCTION, child->children[1]->realType.typePtr, -1);
@@ -244,8 +255,7 @@ void updateType(astNode* node, astNode* father)
         if (node->children.size() == 3)
         {
             auto T1 = node->children[2]->realType;
-            if (T0 != T1)
-                deriveNumberType(T0, T1);
+            deriveAllType(T0, T1);
         }
         scopeInfo value = {T0, std::any(), node->children[0]->value == "mut", false};
         if (findScope(node->scope, node->value).isGlobal) // shadow a constant.
@@ -433,20 +443,19 @@ void updateType(astNode* node, astNode* father)
         }
         else if (node->value == "=")
         {
-            if (T0 != T1)
-                throw compileError();
+            deriveAllType(T0, T1);
             node->realType = UNIT;
         }
         else if (node->value == "+=" || node->value == "-=" || node->value == "*=" || node->value == "/=" ||
             node->value == "%=" || node->value == "<<=" || node->value == ">>")
         {
-            if (T0 != T1 || !isNumber(T0))
-                throw compileError();
+            deriveNumberType(T0, T1);
             node->realType = UNIT;
         }
         else if (node->value == "&=" || node->value == "^=" || node->value == "|=")
         {
-            if (T0 != T1 || !isNumberB(T0))
+            deriveAllType(T0, T1);
+            if (!isNumberB(T0))
                 throw compileError();
             node->realType = UNIT;
         }
@@ -496,6 +505,16 @@ void updateType(astNode* node, astNode* father)
             node->realType = STRING_T;
         else if (node->value == "()")
             node->realType = UNIT_T;
+        else if (node->children.size() == 2 && node->children[0]->type == astNodeType::TYPE)
+        {
+            auto E = node->children[1]->eval;
+            auto T = node->children[1]->realType;
+            if (!E.has_value() || (T != USIZE && T != UINT && T!=INT))
+                throw compileError();
+            node->realType.name = TypeName::TYPE;
+            node->realType.typePtr = new Type(TypeName::ARRAY, node->children[0]->realType.typePtr,
+                static_cast<unsigned int>(std::any_cast<long long>(E)));
+        }
         else
             throw compileError();
     }
@@ -586,21 +605,59 @@ void updateType(astNode* node, astNode* father)
     }
     else if (node->type == astNodeType::ARRAY_BUILD)
     {
-        auto& children = node->children[0]->children;
-        if (children.empty())
-            throw compileError();
-        auto& T = children[0]->realType;
-        for (auto child:children)
-            if (child->realType != T)
+        if (node->children.size() == 1) // [a,b,c]
+        {
+            auto& children = node->children[0]->children;
+            if (children.empty())
                 throw compileError();
-        node->realType = (Type){TypeName::ARRAY, &T, static_cast<int>(children.size())};
+            auto& T = children[0]->realType;
+            std::vector<std::any> R;
+            bool flag=true;
+            for (auto child:children)
+            {
+                deriveAllType(child->realType, T);
+                if (!child->eval.has_value())
+                    flag=false;
+                if (flag)
+                    R.emplace_back(child->eval);
+            }
+            node->realType = (Type){TypeName::ARRAY, &T, static_cast<unsigned int>(children.size())};
+            if (flag)
+                node->eval = R;
+        }
+        else // [a;b]
+        {
+            auto T = node->children[1]->realType;
+            auto E = node->children[1]->eval;
+            if ((T != USIZE && T != UINT && T != INT) || !E.has_value())
+                throw compileError();
+            auto len=static_cast<unsigned int>(std::any_cast<long long>(E));
+            node->realType = (Type){TypeName::ARRAY, &node->children[0]->realType, len};
+            auto E0 = node->children[0]->eval;
+            if (E0.has_value())
+            {
+                std::vector<std::any> R;
+                for (int i=0;i<len;i++)
+                    R.push_back(E0);
+                node->eval = R;
+            }
+        }
     }
     else if (node->type == astNodeType::ARRAY_INDEX)
     {
         auto T0 = node->children[0]->realType, T1 = node->children[1]->realType;
-        if (T0.name != TypeName::ARRAY || T1 != USIZE)
+        auto E0 = node->children[0]->eval, E1 = node->children[1]->eval;
+        if (T0.name != TypeName::ARRAY || (T1 != USIZE && T1 != UINT && T1 != INT))
             throw compileError();
         node->realType = *T0.typePtr;
+        if (E0.has_value() && E1.has_value())
+        {
+            auto R = std::any_cast<std::vector<std::any>>(E0);
+            auto L = static_cast<unsigned int>(std::any_cast<long long>(E1));
+            if (R.size() <= L)
+                throw compileError();
+            node->eval = R[L];
+        }
     }
     else if (node->type == astNodeType::FUNCTION_CALL)
     {

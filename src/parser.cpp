@@ -1,5 +1,4 @@
 #include "parser.h"
-#include <algorithm>
 
 parser::parser():src(""){}
 

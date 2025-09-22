@@ -16,14 +16,14 @@ class Type final
 {
 public:
     TypeName name;
-    const Type* typePtr;
-    int len, structID = 0;
+    Type* typePtr;
+    unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;
     [[nodiscard]] std::string to_string() const;
     Type();
     explicit Type(const TypeName&);
-    Type(const TypeName&, const Type*, const int&);
+    Type(const TypeName&, Type*, const unsigned int&);
     friend bool operator==(const Type&, const Type&);
     friend bool operator!=(const Type&, const Type&);
     friend std::ostream& operator<<(std::ostream&, const Type&);
@@ -58,15 +58,15 @@ enum class astNodeType
 class astNode final
 {
 public:
-    virtual ~astNode()=default;
+    ~astNode()=default;
     std::vector<astNode*> children;
     std::string value;
     astNodeType type;
     Type realType;
     std::any eval;
     std::pair<Scope*, astNode*> scope;
-    std::vector<std::string> showSelf();
-    std::vector<std::string> showTree();
+    std::vector<std::string> showSelf() const;
+    std::vector<std::string> showTree() const;
 };
 
 

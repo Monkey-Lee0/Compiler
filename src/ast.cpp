@@ -1,7 +1,50 @@
 #include "ast.h"
 #include<iostream>
 
-std::vector<std::string> astNode::showSelf()
+std::string showAny(const Type& realType, const std::any& eval)
+{
+    if (eval.type() == typeid(long long))
+    {
+        auto R=std::any_cast<long long>(eval);
+        if (realType == Type(TypeName::U32) || realType == Type(TypeName::USIZE) ||
+            realType == Type(TypeName::UINT))
+            R=static_cast<unsigned int>(R);
+        else
+            R=static_cast<int>(R);
+        return std::to_string(R);
+    }
+    if (eval.type() == typeid(bool))
+    {
+        auto R=std::any_cast<bool>(eval);
+        return R == true ? "true" : "false";
+    }
+    if (eval.type() == typeid(char))
+    {
+        auto R=std::any_cast<char>(eval);
+        if (R <= 31)
+            return std::to_string(R);
+        if (R==32)
+            return "(space)";
+        std::string A;A.push_back(R);
+        return A;
+    }
+    if (eval.type() == typeid(std::vector<std::any>))
+    {
+        auto R=std::any_cast<std::vector<std::any>>(eval);
+        std::string res="[";
+        for (int i=0; i<R.size(); i++)
+        {
+            res.append(showAny(*realType.typePtr,R[i]));
+            if (i+1 != R.size())
+                res.push_back(',');
+        }
+        res.push_back(']');
+        return res;
+    }
+    return "";
+}
+
+std::vector<std::string> astNode::showSelf() const
 {
     std::vector<std::string> res;
     res.emplace_back("");
@@ -141,39 +184,12 @@ std::vector<std::string> astNode::showSelf()
     if (eval.has_value())
     {
         res.back().append("   eval:");
-        if (eval.type() == typeid(long long))
-        {
-            auto R=std::any_cast<long long>(eval);
-            if (realType == Type(TypeName::U32) || realType == Type(TypeName::USIZE) ||
-                realType == Type(TypeName::UINT))
-                R=static_cast<unsigned int>(R);
-            else
-                R=static_cast<int>(R);
-            res.back().append(std::to_string(R));
-        }
-        else if (eval.type() == typeid(bool))
-        {
-            auto R=std::any_cast<bool>(eval);
-            if (R == true)
-                res.back().append("true");
-            else
-                res.back().append("false");
-        }
-        else if (eval.type() == typeid(char))
-        {
-            auto R=std::any_cast<char>(eval);
-            if (R <= 31)
-                res.back().append(std::to_string(R));
-            else if (R==32)
-                res.back().append("(space)");
-            else
-                res.back().push_back(R);
-        }
+        res.back().append(showAny(realType, eval));
     }
     return res;
 }
 
-std::vector<std::string> astNode::showTree()
+std::vector<std::string> astNode::showTree() const
 {
     auto res=astNode::showSelf();
     for (int i=0;i<children.size();i++)

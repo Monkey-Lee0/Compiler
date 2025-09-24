@@ -28,6 +28,7 @@ inline auto STR_T = Type(TypeName::TYPE, &STR, -1);
 inline auto STRING_T = Type(TypeName::TYPE, &STRING, -1);
 inline auto BOOL_T = Type(TypeName::TYPE, &BOOL, -1);
 inline auto UNIT_T = Type(TypeName::TYPE, &UNIT, -1);
+inline auto VERSATILE_T = Type(TypeName::TYPE, &VERSATILE, -1);
 
 struct Unit{};
 
@@ -37,6 +38,9 @@ void updateType(astNode*, astNode*, astNode*, astNode*);
 
 bool checkAsTrans(const Type&, const Type&);
 
+void loadBuiltin(astNode*);
+
 void semanticCheckType(astNode*);
+
 
 #endif

@@ -104,7 +104,7 @@ void parser::appendType(astNode *node)
 
     auto tk=src.consume();
     if (tk == (token){tokenType::OPERATOR, "("})
-        src.expect({tokenType::OPERATOR, ")"});
+        src.expect({tokenType::OPERATOR, ")"}), node->value = "()";
     else if (tk == (token){tokenType::OPERATOR, "["})
     {
         auto newType=new astNode;
@@ -226,10 +226,20 @@ void parser::appendLetStatement(astNode* node)
 
     node->value=src.expect(tokenType::IDENTIFIER).value;
 
-    src.expect({tokenType::OPERATOR, ":"});
     auto newNode=new astNode;
-    appendType(newNode);
     node->children.push_back(newNode);
+    if (src.peek() == (token){tokenType::OPERATOR, ":"})
+    {
+        src.consume();
+        appendType(newNode);
+    }
+    else if(node->value == "_")
+    {
+        newNode->type = astNodeType::TYPE;
+        newNode->value = "_";
+    }
+    else
+        throw compileError();
 
     auto tk=src.consume();
     if (tk == (token){tokenType::OPERATOR, "="})

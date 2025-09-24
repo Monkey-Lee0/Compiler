@@ -201,7 +201,7 @@ void resolveDependency(astNode* node)
             while (!S.empty())
             {
                 auto x=*S.back();S.pop_back();
-                if (x.type == astNodeType::IDENTIFIER)
+                if (x.type == astNodeType::IDENTIFIER || x.type == astNodeType::TYPE)
                 {
                     int Y=std::ranges::lower_bound(name, x.value)-name.begin();
                     if (Y != name.size() && name[Y] == x.value && mp[name[Y]]->type != astNodeType::FUNCTION)
@@ -256,8 +256,7 @@ void resolveDependency(astNode* node)
         }
 
     // resolve function dependency
-    for (auto child:node->children)
-        if (child->type == astNodeType::FUNCTION)
+        else if (child->type == astNodeType::FUNCTION)
         {
             child->children[0]->scope = child->scope;
             updateType(child->children[0], nullptr, nullptr, nullptr);
@@ -276,8 +275,7 @@ void resolveDependency(astNode* node)
         }
 
     // resolve struct dependency
-    for (auto child:node->children)
-        if (child->type == astNodeType::STRUCT)
+        else if (child->type == astNodeType::STRUCT)
         {
             child->children[0]->scope = child->scope;
             updateType(child->children[0], nullptr, nullptr, nullptr);
@@ -302,7 +300,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
 {
     if (node->realType != ILLEGAL)
         return ;
-    if (node->type == astNodeType::PROGRAM || node->type == astNodeType::STATEMENT_BLOCK)
+    if (node->type == astNodeType::STATEMENT_BLOCK)
         node->scope = std::make_pair(new Scope(), father);
     for (auto child:node->children)
         child->scope = node->scope;
@@ -390,11 +388,11 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         auto T = UNIT;
         if (!node->children.empty())
             T = node->children.back()->realType;
-        node->realType = T;
 
         if (fnPtr == nullptr)
             throw compileError();
         deriveAllType(T, *fnPtr->children[1]->realType.typePtr);
+        node->realType = T;
     }
     else if (node->type == astNodeType::IF)
     {
@@ -722,6 +720,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             node->realType = STRING_T;
         else if (node->value == "()")
             node->realType = UNIT_T;
+        else if (node->value == "_")
+            node->realType = VERSATILE_T;
         else if (node->children.empty())
         {
             const auto T = findScope(node->scope, node->value).type;
@@ -893,8 +893,10 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         if (FT.name != TypeName::FUNCTION || FT.members.size() != node->children[1]->children.size())
             throw compileError();
         for (int i=0; i<FT.members.size(); i++)
-            if (*FT.members[i] != node->children[1]->children[i]->realType)
-                throw compileError();
+        {
+            auto T0 = *FT.members[i], T1 = node->children[1]->children[i]->realType;
+            deriveAllType(T0, T1);
+        }
         node->realType = *FT.typePtr;
     }
     else if (node->type == astNodeType::STRUCT_BUILD)
@@ -920,4 +922,23 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     }
 }
 
-void semanticCheckType(astNode* node){updateType(node, nullptr, nullptr, nullptr);}
+void loadBuiltin(astNode* node)
+{
+    node->scope = std::make_pair(new Scope(), nullptr);
+    auto T = (Type){TypeName::FUNCTION, &UNIT, 0};
+    T.members.push_back(&I32);
+
+    node->scope.first->set("exit", {T, std::any(), false, true});
+    node->scope.first->set("printInt", {T, std::any(), false, true});
+    node->scope.first->set("printlnInt", {T, std::any(), false, true});
+
+    T.typePtr = &I32;
+    T.members.clear();
+    node->scope.first->set("getInt", {T, std::any(), false, true});
+}
+
+void semanticCheckType(astNode* node)
+{
+    loadBuiltin(node);
+    updateType(node, nullptr, nullptr, nullptr);
+}

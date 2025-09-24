@@ -184,7 +184,7 @@ std::vector<std::string> astNode::showSelf() const
         res.back().append(showAny(realType, eval));
     }
     if (isMutable)
-        res.back().append("mutable");
+        res.back().append(" mutable");
     return res;
 }
 

@@ -9,9 +9,14 @@
 enum class TypeName
 {
     ILLEGAL, I32, U32, ISIZE, USIZE, INT, IINT, UINT, CHAR, STR,
-    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, TYPE
+    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, TYPE,
+    VERSATILE, NEVER
 };
 
+
+class Scope;
+
+inline unsigned int structNum = 0;
 class Type final
 {
 public:
@@ -20,6 +25,7 @@ public:
     unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;
+    Scope* field;
     [[nodiscard]] std::string to_string() const;
     Type();
     explicit Type(const TypeName&);
@@ -40,15 +46,15 @@ public:
 
 class Scope final
 {
-    std::unordered_map<std::string, scopeInfo> table;
 public:
+    std::unordered_map<std::string, scopeInfo> table;
     scopeInfo get(const std::string&);
     void set(const std::string&, const scopeInfo&);
 };
 
 enum class astNodeType
 {
-    PROGRAM, STRUCT, FIELDS, FIELD, FUNCTION, PARAMETERS, QUANTIFIER, ENUM, ENUM_MEMBERS, IMPL, TRAIT,
+    PROGRAM, STRUCT, FIELDS, FIELD, FUNCTION, PARAMETERS, QUANTIFIER, ENUM, IMPL, TRAIT,
     ASSOCIATED_ITEM, STATEMENT_BLOCK, LET_STATEMENT, CONST_STATEMENT, EXPRESSION_STATEMENT, GROUP_EXPRESSION,
     TYPE, IDENTIFIER, TYPED_IDENTIFIER, BREAK, CONTINUE, RETURN, RETURN_CUR, LOOP, WHILE, IF, ELSE, UNARY_OPERATOR,
     BINARY_OPERATOR, FUNCTION_CALL, ARRAY_INDEX, STRUCT_BUILD, ARRAY_BUILD, CHAR_LITERAL, STRING_LITERAL,
@@ -65,6 +71,8 @@ public:
     Type realType;
     std::any eval;
     std::pair<Scope*, astNode*> scope;
+    bool hasBreak=false, hasReturn=false;
+    bool isMutable=false;
     std::vector<std::string> showSelf() const;
     std::vector<std::string> showTree() const;
 };

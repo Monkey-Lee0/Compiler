@@ -98,9 +98,6 @@ std::vector<std::string> astNode::showSelf() const
         case astNodeType::ENUM:
             res.back() = "enum";
             break;
-        case astNodeType::ENUM_MEMBERS:
-            res.back() = "enum members";
-            break;
         case astNodeType::IMPL:
             res.back() = "impl";
             break;
@@ -186,6 +183,8 @@ std::vector<std::string> astNode::showSelf() const
         res.back().append("   eval:");
         res.back().append(showAny(realType, eval));
     }
+    if (isMutable)
+        res.back().append("mutable");
     return res;
 }
 

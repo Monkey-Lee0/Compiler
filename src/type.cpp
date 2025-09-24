@@ -18,6 +18,19 @@ bool operator==(const Type& A, const Type& B)
         return A.len == B.len && *A.typePtr == *B.typePtr;
     if(A.name == TypeName::STRUCT)
         return A.structID == B.structID;
+    if (A.name == TypeName::TYPE)
+        return *A.typePtr == *B.typePtr;
+    if (A.name == TypeName::FUNCTION)
+    {
+        bool check=*A.typePtr == *B.typePtr && A.members.size() == B.members.size();
+        for (int i=0; i<A.members.size(); i++)
+            check &= A.members[i] == B.members[i];
+        return check;
+    }
+    if (A.name == TypeName::ENUM)
+    {
+        return true;
+    }
     return true;
 }
 bool operator!=(const Type& A, const Type& B){return !(A==B);}
@@ -43,7 +56,14 @@ std::string Type::to_string() const
         case TypeName::UNIT: return "unit";
         case TypeName::ENUM: return "(enum)" + structName;
         case TypeName::ARRAY: return "[" + typePtr->to_string()+";"+std::to_string(len)+"]";
-        case TypeName::STRUCT: return "(struct)" + structName;
+        case TypeName::STRUCT:
+            res="(struct" + std::to_string(structID)+")" + structName+"{";
+            for (const auto& [var, info]:field->table)
+                res += var + ":" + info.type.to_string() + ",";
+            if (!field->table.empty())
+                res.pop_back();
+            res += "}";
+            return res;
         case TypeName::FUNCTION:
             for (int i=0;i<members.size();i++)
             {
@@ -54,6 +74,8 @@ std::string Type::to_string() const
             res.append(")->" + typePtr->to_string());
             return res;
         case TypeName::TYPE: return typePtr->to_string()+"_T";
+        case TypeName::VERSATILE: return "versatile";
+        case TypeName::NEVER: return "never";
         default: return "who are you?";
     }
 }
@@ -133,7 +155,11 @@ void deriveNumberType(Type& A, Type &B)
 
 void deriveAllType(Type& A, Type& B)
 {
-    if (A.name == TypeName::ARRAY || B.name == TypeName::ARRAY)
+    if (A == VERSATILE)
+        A = B;
+    else if (B == VERSATILE)
+        B = A;
+    else if (A.name == TypeName::ARRAY || B.name == TypeName::ARRAY)
     {
         if (A.name != B.name || A.len != B.len)
             throw compileError();
@@ -143,38 +169,48 @@ void deriveAllType(Type& A, Type& B)
         deriveNumberType(A, B);
 }
 
+bool isItem(const astNode* node)
+{
+    return node->type == astNodeType::CONST_STATEMENT || node->type == astNodeType::FUNCTION ||
+        node->type == astNodeType::STRUCT || node->type == astNodeType::TRAIT ||
+        node->type == astNodeType::IMPL;
+}
+
 void resolveDependency(astNode* node)
 {
     std::vector<std::string> name;
     for (const auto child:node->children)
-        name.push_back(child->value);
+        if (isItem(child))
+            name.push_back(child->value);
     std::unordered_map<std::string, astNode*> mp;
     std::ranges::sort(name);
     std::vector<std::vector<int>> G;
     std::vector<int> d;
-    G.resize(node->children.size(),{});
-    d.resize(node->children.size(), 0);
+    G.resize(name.size(),{});
+    d.resize(name.size(), 0);
     for (const auto child:node->children)
-        mp[child->value]=child;
+        if (isItem(child))
+            mp[child->value]=child;
     for (const auto child:node->children)
-    {
-        std::vector<astNode*> S;
-        for (auto c:child->children)
-            S.emplace_back(c);
-        int X=std::ranges::lower_bound(name, child->value)-name.begin();
-        while (!S.empty())
+        if (isItem(child))
         {
-            auto x=*S.back();S.pop_back();
-            if (x.type == astNodeType::IDENTIFIER)
-            {
-                int Y=std::ranges::lower_bound(name, x.value)-name.begin();
-                if (Y != name.size() && name[Y] == x.value && mp[name[Y]]->type != astNodeType::FUNCTION)
-                    G[Y].push_back(X), d[X]++;
-            }
-            for (auto c:x.children)
+            std::vector<astNode*> S;
+            for (auto c:child->children)
                 S.emplace_back(c);
+            int X=std::ranges::lower_bound(name, child->value)-name.begin();
+            while (!S.empty())
+            {
+                auto x=*S.back();S.pop_back();
+                if (x.type == astNodeType::IDENTIFIER)
+                {
+                    int Y=std::ranges::lower_bound(name, x.value)-name.begin();
+                    if (Y != name.size() && name[Y] == x.value && mp[name[Y]]->type != astNodeType::FUNCTION)
+                        G[Y].push_back(X), d[X]++;
+                }
+                for (auto c:x.children)
+                    S.emplace_back(c);
+            }
         }
-    }
     std::vector<int> e;
     std::vector<int> seq;
     for (int i=0; i < G.size(); i++)
@@ -193,17 +229,22 @@ void resolveDependency(astNode* node)
     }
     if (seq.size() != G.size())
         throw compileError();
+    auto children0 = node->children;
+    node->children.clear();
     for (int i=0; i<G.size(); i++)
-        node->children[i]=mp[name[seq[i]]];
+        node->children.push_back(mp[name[seq[i]]]);
+    for (auto child:children0)
+        if (!isItem(child))
+            node->children.push_back(child);
 
     //resolve constant dependency
     for (auto child:node->children)
         if (child->type == astNodeType::CONST_STATEMENT)
         {
             child->children[0]->scope = child->scope;
-            updateType(child->children[0], nullptr);
+            updateType(child->children[0], nullptr, nullptr, nullptr);
             child->children[1]->scope = child->scope;
-            updateType(child->children[1], nullptr);
+            updateType(child->children[1], nullptr, nullptr, nullptr);
             auto T0 = *child->children[0]->realType.typePtr, T1 = child->children[1]->realType;
             deriveAllType(T0, T1);
             if (!child->children[1]->eval.has_value())
@@ -219,8 +260,8 @@ void resolveDependency(astNode* node)
         if (child->type == astNodeType::FUNCTION)
         {
             child->children[0]->scope = child->scope;
-            updateType(child->children[0], nullptr);
-            updateType(child->children[1], nullptr);
+            updateType(child->children[0], nullptr, nullptr, nullptr);
+            updateType(child->children[1], nullptr, nullptr, nullptr);
             Type T(TypeName::FUNCTION, child->children[1]->realType.typePtr, -1);
             child->scope = std::make_pair(new Scope(), node);
             for (auto id:child->children[0]->children)
@@ -229,13 +270,35 @@ void resolveDependency(astNode* node)
                 child->scope.first->set(id->value, {T0, std::any(), false, false});
                 T.members.push_back(&T0);
             }
-            if (findScope(child->scope, child->value).isGlobal) // shadow a constant.
+            if (findScope(child->scope, child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->set(child->value, {T, std::any(), false, true});
         }
+
+    // resolve struct dependency
+    for (auto child:node->children)
+        if (child->type == astNodeType::STRUCT)
+        {
+            child->children[0]->scope = child->scope;
+            updateType(child->children[0], nullptr, nullptr, nullptr);
+            auto T=new Type(TypeName::STRUCT);
+            T->structID = ++structNum;
+            T->structName = child->value;
+            T->field = new Scope();
+            child->scope = std::make_pair(T->field, node);
+            for (auto id:child->children[0]->children)
+            {
+                auto& T0=*id->children[0]->realType.typePtr;
+                child->scope.first->set(id->value, {T0, std::any(), true, false});
+            }
+            if (findScope(child->scope, child->value).isGlobal) // shadow
+                throw compileError();
+            node->scope.first->set(child->value, {{TypeName::TYPE, T, 0}
+                , std::any(), false, true});
+        }
 }
 
-void updateType(astNode* node, astNode* father)
+void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr)
 {
     if (node->realType != ILLEGAL)
         return ;
@@ -243,11 +306,43 @@ void updateType(astNode* node, astNode* father)
         node->scope = std::make_pair(new Scope(), father);
     for (auto child:node->children)
         child->scope = node->scope;
-    if (node->type == astNodeType::PROGRAM)
+    if (node->type == astNodeType::PROGRAM || node->type == astNodeType::STATEMENT_BLOCK)
         resolveDependency(node);
 
-    for (auto child:node->children)
-        updateType(child, node);
+    if (node->type == astNodeType::WHILE || node->type == astNodeType::LOOP)
+        loopPtr = node;
+    if (node->type == astNodeType::FUNCTION)
+        fnPtr = node;
+
+    if (node->type == astNodeType::BINARY_OPERATOR && (node->value == "." || node->value == "::"))
+        updateType(node->children[0], node, father, loopPtr);
+    else
+        for (auto child:node->children)
+        {
+            updateType(child, node, loopPtr, fnPtr);
+            node->hasBreak |= child->hasBreak;
+            node->hasReturn |= child->hasReturn;
+        }
+
+    if (node->type == astNodeType::FUNCTION)
+        node->hasReturn = false;
+    else if (node->type == astNodeType::WHILE)
+        node->hasBreak = node->hasReturn = false;
+    else if (node->type == astNodeType::LOOP)
+        node->hasBreak = false;
+    else if (node->type == astNodeType::IF && node->children.size() <= 2)
+        node->hasReturn = node->hasBreak = false;
+    else if (node->type == astNodeType::IF && node->children.size() == 3)
+    {
+        node->hasReturn = node->children[1]->hasReturn & node->children[2]->hasReturn;
+        node->hasBreak = node->children[1]->hasBreak & node->children[2]->hasBreak;
+    }
+    else if (node->type == astNodeType::BREAK || node->type == astNodeType::CONTINUE)
+        node->hasBreak = true;
+    else if (node->type == astNodeType::RETURN)
+        node->hasReturn = true;
+
+
 
     if (node->type == astNodeType::LET_STATEMENT)
     {
@@ -261,6 +356,111 @@ void updateType(astNode* node, astNode* father)
         if (findScope(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
         node->scope.first->set(node->value, value);
+    }
+    else if (node->type == astNodeType::STATEMENT_BLOCK)
+    {
+        if (node->children.size() == 0)
+            node->realType = UNIT;
+        else
+        {
+            if (node->children.back()->type == astNodeType::RETURN_CUR)
+                node->realType = node->children.back()->realType;
+            else
+                node->realType = UNIT;
+            for (int i=0; i+1 < node->children.size(); i++)
+                if (node->children[i]->type == astNodeType::RETURN_CUR && node->children[i]->realType != UNIT
+                     && node->children[i]->realType != NEVER)
+                    throw compileError();
+        }
+    }
+    else if (node->type == astNodeType::FUNCTION)
+    {
+        auto T0 = *node->children[1]->realType.typePtr;
+        auto T1 = node->children[2]->realType;
+        if (T1 != UNIT || !node->children[2]->hasReturn)
+            deriveAllType(T0, T1);
+    }
+    else if (node->type == astNodeType::RETURN_CUR)
+    {
+        node->realType = node->children[0]->realType;
+        node->eval = node->children[0]->eval;
+    }
+    else if (node->type == astNodeType::RETURN)
+    {
+        auto T = UNIT;
+        if (!node->children.empty())
+            T = node->children.back()->realType;
+        node->realType = T;
+
+        if (fnPtr == nullptr)
+            throw compileError();
+        deriveAllType(T, *fnPtr->children[1]->realType.typePtr);
+    }
+    else if (node->type == astNodeType::IF)
+    {
+        if (node->children[0]->realType != BOOL)
+            throw compileError();
+        if (node->children.size() <= 2)
+        {
+            if (node->children[1]->realType != UNIT)
+                throw compileError();
+            node->realType = UNIT;
+        }
+        else
+        {
+            auto T0 = node->children[1]->realType;
+            auto T1 = node->children[2]->realType;
+            if ((T0 == UNIT || T0 == NEVER) && (node->children[1]->hasBreak || node->children[1]->hasReturn))
+                T0 = VERSATILE;
+            if ((T1 == UNIT || T1 == NEVER) && (node->children[2]->hasBreak || node->children[2]->hasReturn))
+                T1 = VERSATILE;
+            deriveAllType(T0, T1);
+            if (T0 == VERSATILE)
+                T0 = UNIT;
+            node->realType = T0;
+        }
+    }
+    else if (node->type == astNodeType::ELSE)
+    {
+        if (father->type != astNodeType::IF)
+            throw compileError();
+        node->realType = node->children[0]->realType;
+        node->eval = node->children[0]->eval;
+    }
+    else if (node->type == astNodeType::WHILE)
+    {
+        if (node->realType == ILLEGAL)
+            node->realType = UNIT;
+        if (node->children[0]->realType != BOOL)
+            throw compileError();
+        if (node->children[1]->realType != UNIT)
+            throw compileError();
+    }
+    else if (node->type == astNodeType::LOOP)
+    {
+        if (node->realType == ILLEGAL)
+            node->realType = UNIT;
+        if (node->children[0]->realType != UNIT)
+            throw compileError();
+    }
+    else if (node->type == astNodeType::CONTINUE)
+    {
+        node->realType = UNIT;
+        if (loopPtr == nullptr)
+            throw compileError();
+    }
+    else if (node->type == astNodeType::BREAK)
+    {
+        node->realType = UNIT;
+        if (loopPtr == nullptr)
+            throw compileError();
+        Type T = UNIT;
+        if (!node->children.empty())
+            T = node->children.back()->realType;
+        if (loopPtr->realType == ILLEGAL)
+            loopPtr->realType = T;
+        else
+            deriveAllType(loopPtr->realType, T);
     }
     else if (node->type == astNodeType::BINARY_OPERATOR)
     {
@@ -443,17 +643,23 @@ void updateType(astNode* node, astNode* father)
         }
         else if (node->value == "=")
         {
+            if (!node->children[0]->isMutable)
+                throw compileError();
             deriveAllType(T0, T1);
             node->realType = UNIT;
         }
         else if (node->value == "+=" || node->value == "-=" || node->value == "*=" || node->value == "/=" ||
             node->value == "%=" || node->value == "<<=" || node->value == ">>")
         {
+            if (!node->children[0]->isMutable)
+                throw compileError();
             deriveNumberType(T0, T1);
             node->realType = UNIT;
         }
         else if (node->value == "&=" || node->value == "^=" || node->value == "|=")
         {
+            if (!node->children[0]->isMutable)
+                throw compileError();
             deriveAllType(T0, T1);
             if (!isNumberB(T0))
                 throw compileError();
@@ -461,14 +667,14 @@ void updateType(astNode* node, astNode* father)
         }
         else if (node->value == "as")
         {
+            if (T1.name != TypeName::TYPE)
+                throw compileError();
             T1 = *T1.typePtr;
             checkAsTrans(T0, T1);
             node->realType = T1;
             if (E0.has_value())
             {
-                if (T0 == T1)
-                    node->eval = E0;
-                else if (isNumber(T0))
+                if (T0 == T1 || isNumber(T0))
                     node->eval = E0;
                 else if (T0 == CHAR)
                     node->eval = static_cast<long long>(std::any_cast<char>(E0));
@@ -476,12 +682,23 @@ void updateType(astNode* node, astNode* father)
                     node->eval = static_cast<long long>(std::any_cast<bool>(E0));
             }
         }
+        else if (node->value == ".")
+        {
+            auto T=node->children[0]->realType;
+            if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
+                throw compileError();
+            auto T0 = T.field->get(node->children[1]->value).type;
+            if (T0 == ILLEGAL)
+                throw compileError();
+            node->realType = T0;
+        }
     }
     else if (node->type == astNodeType::IDENTIFIER)
     {
         auto R=findScope(node->scope, node->value);
         if (R.type == ILLEGAL)
             throw compileError();
+        node->isMutable = R.isMutable;
         node->eval = R.eval;
         node->realType = R.type;
     }
@@ -505,6 +722,13 @@ void updateType(astNode* node, astNode* father)
             node->realType = STRING_T;
         else if (node->value == "()")
             node->realType = UNIT_T;
+        else if (node->children.empty())
+        {
+            const auto T = findScope(node->scope, node->value).type;
+            if (T.name != TypeName::TYPE)
+                throw compileError();
+            node->realType = T;
+        }
         else if (node->children.size() == 2 && node->children[0]->type == astNodeType::TYPE)
         {
             auto E = node->children[1]->eval;
@@ -650,13 +874,17 @@ void updateType(astNode* node, astNode* father)
         if (T0.name != TypeName::ARRAY || (T1 != USIZE && T1 != UINT && T1 != INT))
             throw compileError();
         node->realType = *T0.typePtr;
-        if (E0.has_value() && E1.has_value())
+        node->isMutable = node->children[0]->isMutable;
+        if (E1.has_value())
         {
-            auto R = std::any_cast<std::vector<std::any>>(E0);
             auto L = static_cast<unsigned int>(std::any_cast<long long>(E1));
-            if (R.size() <= L)
+            if (T0.len <= L)
                 throw compileError();
-            node->eval = R[L];
+            if (E0.has_value())
+            {
+                auto R = std::any_cast<std::vector<std::any>>(E0);
+                node->eval = R[L];
+            }
         }
     }
     else if (node->type == astNodeType::FUNCTION_CALL)
@@ -669,6 +897,27 @@ void updateType(astNode* node, astNode* father)
                 throw compileError();
         node->realType = *FT.typePtr;
     }
+    else if (node->type == astNodeType::STRUCT_BUILD)
+    {
+        auto T=node->children[0]->realType;
+        if (T.name != TypeName::TYPE || T.typePtr->name != TypeName::STRUCT)
+            throw compileError();
+        auto T0 = T.typePtr;
+        std::vector<std::string> Name;
+        for (auto child:node->children[1]->children)
+        {
+            auto name=child->value;
+            auto T1=T0->field->get(name).type, T2=child->children[0]->realType;
+            deriveAllType(T1, T2);
+            Name.push_back(name);
+        }
+        std::ranges::sort(Name);
+        Name.erase(std::ranges::unique(Name).begin(), Name.end());
+        if (Name.size() != T0->field->table.size() ||
+            Name.size() != node->children[1]->children.size())
+            throw compileError();
+        node->realType = *T0;
+    }
 }
 
-void semanticCheckType(astNode* node){updateType(node, nullptr);}
+void semanticCheckType(astNode* node){updateType(node, nullptr, nullptr, nullptr);}

@@ -206,8 +206,6 @@ int lexer::matchIntegerLiteral(int pos) const
 {
     if(pos==code.size())
         return -1;
-    if (code[pos]=='-')
-        pos++;
     if(pos==code.size())
         return -1;
     if(code[pos]=='0'&&pos+1<code.size())

@@ -15,8 +15,8 @@ class parser
     void appendLetStatement(astNode*);
     void appendConstStatement(astNode*);
     void appendExpressionStatement(astNode*);
-    void appendSimpleExpression(astNode*);
-    astNode* parseExp(int precedence);
+    void appendSimpleExpression(astNode*,bool firstFlag=false);
+    astNode* parseExp(int,bool);
     void appendGroupExpression(astNode*);
     void appendParameters(astNode*);
     void appendTypedIdentifier(astNode*);

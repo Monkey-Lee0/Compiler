@@ -16,6 +16,8 @@ inline auto STR = Type(TypeName::STR);
 inline auto STRING = Type(TypeName::STRING);
 inline auto BOOL = Type(TypeName::BOOL);
 inline auto UNIT = Type(TypeName::UNIT);
+inline auto VERSATILE = Type(TypeName::VERSATILE);
+inline auto NEVER = Type(TypeName::NEVER);
 
 inline auto I32_T = Type(TypeName::TYPE, &I32, -1);
 inline auto U32_T = Type(TypeName::TYPE, &U32, -1);
@@ -31,7 +33,7 @@ struct Unit{};
 
 scopeInfo findScope(const std::pair<Scope*, astNode*>&, const std::string &name);
 
-void updateType(astNode*, astNode*);
+void updateType(astNode*, astNode*, astNode*, astNode*);
 
 bool checkAsTrans(const Type&, const Type&);
 

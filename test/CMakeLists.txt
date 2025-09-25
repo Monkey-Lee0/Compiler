@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(test_parser test_parser.cpp
         ../src/lexer.cpp
         ../src/token.cpp
-        ../src/AST.h
+        ../src/ast.h
         ../src/lexer.h
         ../src/token.h
         ../src/parser.cpp

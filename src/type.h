@@ -2,6 +2,7 @@
 #define COMPILER_TYPE_H
 
 #include "ast.h"
+#include<climits>
 
 inline auto ILLEGAL = Type(TypeName::ILLEGAL);
 inline auto I32 = Type(TypeName::I32);

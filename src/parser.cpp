@@ -276,9 +276,8 @@ void parser::appendConstStatement(astNode* node)
 static bool isPrefixOperend(const token& t)
 {
     return
-        (t.type == tokenType::OPERATOR && t.value == "+") ||
         (t.type == tokenType::OPERATOR && t.value == "-") ||
-        (t.type == tokenType::OPERATOR && t.value == "~");
+        (t.type == tokenType::OPERATOR && t.value == "!");
 }
 static bool isItem(const token& t)
 {
@@ -289,8 +288,12 @@ static bool isItem(const token& t)
         t.type == tokenType::FLOAT_LITERAL ||
         t.type == tokenType::RAW_STRING_LITERAL ||
         (t.type == tokenType::KEYWORD && (t.value == "false" || t.value == "true" ||
-            t.value == "self" || t.value == "Self")) ||
-        t.type == tokenType::IDENTIFIER;
+            t.value == "self" || t.value == "Self" || t.value == "loop" || t.value == "while" ||
+            t.value == "if" || t.value =="else" || t.value == "return" || t.value == "break")) ||
+        t.type == tokenType::IDENTIFIER ||
+        t == (token){tokenType::OPERATOR, "("} ||
+        t == (token){tokenType::OPERATOR, "{"} ||
+        t == (token){tokenType::OPERATOR, "["} ;
 }
 static bool isInfixOperand(const token &t)
 {
@@ -376,6 +379,15 @@ static astNode* createPrefix(const token &t)
         newNode -> type = astNodeType::TYPE;
         newNode -> value = t.value;
     }
+    else if (t == (token){tokenType::OPERATOR, "("})
+    {
+        newNode -> type = astNodeType::TYPE;
+        newNode -> value = "()";
+    }
+    else if (t == (token){tokenType::KEYWORD, "return"})
+        newNode -> type = astNodeType::RETURN;
+    else if (t == (token){tokenType::KEYWORD, "break"})
+        newNode -> type = astNodeType::BREAK;
     else if (t.type == tokenType::IDENTIFIER)
     {
         newNode -> type = astNodeType::IDENTIFIER;
@@ -444,16 +456,21 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
         // left bracket
         if (prefix.type == tokenType::OPERATOR && prefix.value == "(")
         {
-            auto newNode = parseExp(0);
-            src.expect({tokenType::OPERATOR,")"});
-            if (cur != nullptr)
-                cur -> children.push_back(newNode);
+            if (src.peek() == (token){tokenType::OPERATOR, ")"})
+                src.consume();
             else
-                node = newNode;
-            break;
+            {
+                auto newNode = parseExp(0);
+                src.expect({tokenType::OPERATOR,")"});
+                if (cur != nullptr)
+                    cur -> children.push_back(newNode);
+                else
+                    node = newNode;
+                break;
+            }
         }
         // block expression
-        if (prefix.type == tokenType::OPERATOR && prefix.value == "{")
+        else if (prefix.type == tokenType::OPERATOR && prefix.value == "{")
         {
             auto newNode=new astNode;
             appendStatementBlock(newNode);
@@ -467,7 +484,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         // array
-        if (prefix.type == tokenType::OPERATOR && prefix.value == "[")
+        else if (prefix.type == tokenType::OPERATOR && prefix.value == "[")
         {
             auto newNode = new astNode;
             newNode -> type = astNodeType::ARRAY_BUILD;
@@ -522,7 +539,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         // loop statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "loop")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "loop")
         {
             src.expect({tokenType::OPERATOR, "{"});
             auto newNode=new astNode;
@@ -540,7 +557,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         //while statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "while")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "while")
         {
             auto newNode=new astNode;
             newNode->type = astNodeType::WHILE;
@@ -565,7 +582,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         //if statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "if")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "if")
         {
             auto newNode=new astNode;
             newNode->type = astNodeType::IF;
@@ -595,7 +612,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             continue;
         }
         //else statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "else")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "else")
         {
             auto newNode=new astNode;
             newNode->type = astNodeType::ELSE;
@@ -617,40 +634,40 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         // return statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "return")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "return")
         {
-            auto newNode=new astNode;
-            if (cur != nullptr)
-                cur->children.push_back(newNode);
-            else
-                node = newNode;
-            cur = newNode;
-            newNode->type = astNodeType::RETURN;
-            if (src.peek() != (token){tokenType::OPERATOR, ";"})
+            if (isItem(src.peek()) || isPrefixOperend(src.peek()))
             {
+                auto newNode=new astNode;
+                if (cur != nullptr)
+                    cur->children.push_back(newNode);
+                else
+                    node = newNode;
+                cur = newNode;
+                newNode->type = astNodeType::RETURN;
                 auto newExpr=new astNode;
                 newNode->children.push_back(newExpr);
                 appendSimpleExpression(newExpr);
+                return node;
             }
-            return node;
         }
         // break statement
-        if (prefix.type == tokenType::KEYWORD && prefix.value == "break")
+        else if (prefix.type == tokenType::KEYWORD && prefix.value == "break")
         {
-            auto newNode=new astNode;
-            if (cur != nullptr)
-                cur->children.push_back(newNode);
-            else
-                node = newNode;
-            cur = newNode;
-            newNode->type = astNodeType::BREAK;
-            if (src.peek() != (token){tokenType::OPERATOR, ";"})
+            if (isItem(src.peek()) || isPrefixOperend(src.peek()))
             {
+                auto newNode=new astNode;
+                if (cur != nullptr)
+                    cur->children.push_back(newNode);
+                else
+                    node = newNode;
+                cur = newNode;
+                newNode->type = astNodeType::BREAK;
                 auto newExpr=new astNode;
                 newNode->children.push_back(newExpr);
                 appendSimpleExpression(newExpr);
+                return node;
             }
-            return node;
         }
 
         auto newNode = createPrefix(prefix);
@@ -762,11 +779,10 @@ void parser::appendExpressionStatement(astNode* node)
         auto newNode=new astNode;
         newNode->type = astNodeType::CONTINUE;
         node->children.push_back(newNode);
-        src.consume();
     }
-
     else
         appendSimpleExpression(node, true);
+
     if (src.peek() != (token){tokenType::OPERATOR, ";"})
         node->type = astNodeType::RETURN_CUR;
     else
@@ -797,8 +813,6 @@ void parser::appendGroupExpression(astNode* node)
 void parser::appendItem(astNode* node)
 {
     auto tk=src.peek();
-    if (tk == (token){tokenType::OPERATOR, ";"})
-        return src.consume(), void();
     if (tk.type != tokenType::KEYWORD)
         throw compileError();
     if (tk.value == "fn")
@@ -847,11 +861,6 @@ void parser::appendAssociatedItem(astNode *node)
     while (src.peek() != (token){tokenType::OPERATOR, "}"})
     {
         auto tk=src.peek();
-        if (tk == (token){tokenType::OPERATOR, ";"})
-        {
-            src.consume();
-            continue;
-        }
         if (tk.type != tokenType::KEYWORD)
             throw compileError();
         if (tk.value == "fn")

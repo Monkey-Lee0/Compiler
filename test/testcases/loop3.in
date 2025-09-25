@@ -1,0 +1,12 @@
+fn foo(a:i32)->bool
+{
+    let mut b:i32=a;
+    if(loop
+    {
+        if(b==5){break 42;}
+        else if(b==6){break 98;}
+        else{b=(2*b+1)%10;}
+    } >= 50){return true;}
+    if(a%2==0){return true;}
+    return false;
+}

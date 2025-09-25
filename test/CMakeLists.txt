@@ -9,7 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 # 3.2 编译测试可执行文件
-add_executable(test_parser test_parser.cpp
+add_executable(my_test test.cpp
         ../src/lexer.cpp
         ../src/token.cpp
         ../src/ast.h
@@ -22,10 +22,10 @@ add_executable(test_parser test_parser.cpp
         ../src/type.h)
 
 # 3.3 链接被测库 + gtest
-target_link_libraries(test_parser
+target_link_libraries(my_test
     PRIVATE
     gtest_main          # 自带 main 函数，不用自己写
 )
 
 # 3.4 把测试注册到 CTest
-add_test(NAME test_parser COMMAND test_parser)
+add_test(NAME my_test COMMAND my_test)

@@ -26,6 +26,7 @@ public:
     std::string structName;
     std::vector<Type const*> members;
     Scope* field;
+    unsigned int memberFieldNum = 0;
     [[nodiscard]] std::string to_string() const;
     Type();
     explicit Type(const TypeName&);
@@ -71,6 +72,7 @@ public:
     Type realType;
     std::any eval;
     std::pair<Scope*, astNode*> scope;
+    unsigned int curSonId=0;
     bool hasBreak=false, hasReturn=false;
     bool isMutable=false;
     std::vector<std::string> showSelf() const;

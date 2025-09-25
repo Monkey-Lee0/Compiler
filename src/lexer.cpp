@@ -286,7 +286,7 @@ int lexer::matchIntegerLiteral(int pos) const
     if(!isDecLiteral(code[pos]))
         return -1;
     pos++;
-    while(pos!=code.size()&&(code[pos]=='_'||isOctLiteral(code[pos])))
+    while(pos!=code.size()&&(code[pos]=='_'||isDecLiteral(code[pos])))
         pos++;
     if (pos+3<=code.size() && code.substr(pos,3) == "i32")
         return pos+3;

@@ -1,0 +1,12 @@
+fn foo()
+{
+    loop
+    {
+        () == ();
+        () == return;
+        return == break;
+        break == return;
+        ({break}) as ();
+        () as ();
+    }
+}

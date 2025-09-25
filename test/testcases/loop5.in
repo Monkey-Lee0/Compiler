@@ -1,0 +1,4 @@
+fn goo()
+{
+    while({true}){continue break}
+}

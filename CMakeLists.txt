@@ -3,6 +3,9 @@ project(Compiler)
 
 set(CMAKE_CXX_STANDARD 20)
 
+enable_testing()
+add_subdirectory(test)
+
 add_executable(Compiler
     src/main.cpp
     src/lexer.cpp

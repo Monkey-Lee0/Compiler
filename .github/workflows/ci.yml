@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    # 想多平台就把 runs-on 改成矩阵，见文末小贴士
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉代码
+      - uses: actions/checkout@v4
+
+      # 2. 装编译工具（ubuntu 22.04 自带 cmake 3.22+，满足 3.14+ 要求）
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++
+
+      # 3. 配置 → 编译 → 测试 一条龙
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --parallel $(nproc)
+
+      # 4. （可选）把 ctest 的 xml 报告当成制品留存
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ runner.os }}
+          path: build/Testing/**/*.xml

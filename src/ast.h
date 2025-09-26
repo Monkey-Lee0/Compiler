@@ -25,7 +25,7 @@ public:
     unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;
-    Scope* field;
+    Scope* field = nullptr;
     unsigned int memberFieldNum = 0;
     [[nodiscard]] std::string to_string() const;
     Type();
@@ -48,9 +48,11 @@ public:
 class Scope final
 {
 public:
-    std::unordered_map<std::string, scopeInfo> table;
-    scopeInfo get(const std::string&);
-    void set(const std::string&, const scopeInfo&);
+    std::unordered_map<std::string, scopeInfo> typeTable, itemTable;
+    scopeInfo getType(const std::string&);
+    scopeInfo getItem(const std::string&);
+    void setType(const std::string&, const scopeInfo&);
+    void setItem(const std::string&, const scopeInfo&);
 };
 
 enum class astNodeType

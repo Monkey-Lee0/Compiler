@@ -1,0 +1,5 @@
+fn main()
+{
+    let a:i32 = {5} + loop{break 5;};
+    ({5})+loop{break 5};
+}

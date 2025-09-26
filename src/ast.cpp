@@ -214,10 +214,17 @@ std::vector<std::string> astNode::showTree() const
     return res;
 }
 
-scopeInfo Scope::get(const std::string& name)
+scopeInfo Scope::getType(const std::string& name)
 {
-    if (!table.contains(name))
+    if (!typeTable.contains(name))
         return {Type(TypeName::ILLEGAL), std::any(), false, false};
-    return table[name];
+    return typeTable[name];
 }
-void Scope::set(const std::string& name, const scopeInfo& value){table[name] = value;}
+scopeInfo Scope::getItem(const std::string& name)
+{
+    if (!itemTable.contains(name))
+        return {Type(TypeName::ILLEGAL), std::any(), false, false};
+    return itemTable[name];
+}
+void Scope::setType(const std::string& name, const scopeInfo& value){typeTable[name] = value;}
+void Scope::setItem(const std::string& name, const scopeInfo& value){itemTable[name] = value;}

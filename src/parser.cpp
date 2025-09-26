@@ -289,7 +289,8 @@ static bool isItem(const token& t)
         t.type == tokenType::RAW_STRING_LITERAL ||
         (t.type == tokenType::KEYWORD && (t.value == "false" || t.value == "true" ||
             t.value == "self" || t.value == "Self" || t.value == "loop" || t.value == "while" ||
-            t.value == "if" || t.value =="else" || t.value == "return" || t.value == "break")) ||
+            t.value == "if" || t.value =="else" || t.value == "return" || t.value == "break" ||
+            t.value == "continue")) ||
         t.type == tokenType::IDENTIFIER ||
         t == (token){tokenType::OPERATOR, "("} ||
         t == (token){tokenType::OPERATOR, "{"} ||
@@ -388,6 +389,8 @@ static astNode* createPrefix(const token &t)
         newNode -> type = astNodeType::RETURN;
     else if (t == (token){tokenType::KEYWORD, "break"})
         newNode -> type = astNodeType::BREAK;
+    else if (t == (token){tokenType::KEYWORD, "continue"})
+        newNode -> type = astNodeType::CONTINUE;
     else if (t.type == tokenType::IDENTIFIER)
     {
         newNode -> type = astNodeType::IDENTIFIER;
@@ -772,16 +775,7 @@ void parser::appendExpressionStatement(astNode* node)
 
     auto tk=src.peek();
 
-    // continue statement
-    if (tk.type == tokenType::KEYWORD && tk.value == "continue")
-    {
-        src.consume();
-        auto newNode=new astNode;
-        newNode->type = astNodeType::CONTINUE;
-        node->children.push_back(newNode);
-    }
-    else
-        appendSimpleExpression(node, true);
+    appendSimpleExpression(node, true);
 
     if (src.peek() != (token){tokenType::OPERATOR, ";"})
         node->type = astNodeType::RETURN_CUR;

@@ -1,4 +1,4 @@
-fn foo()
+fn foo(x:i32)
 {
     loop
     {
@@ -8,5 +8,24 @@ fn foo()
         break == return;
         ({break}) as ();
         () as ();
+        let x:bool = return;
+        let mut y:i32 = {if(true){return}else{return}};
+        y=return;
+        let a:[i32;2]=[5i32,return];
+        return break return break break break continue
+    }
+    return return;
+}
+
+fn goo(){foo(return);}
+
+struct haha{x:i32}
+
+fn hoo()
+{
+    loop
+    {
+        let mut a:haha=haha{x:continue};
+        a.x = return;
     }
 }

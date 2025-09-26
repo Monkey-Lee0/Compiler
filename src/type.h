@@ -32,11 +32,7 @@ inline auto VERSATILE_T = Type(TypeName::TYPE, &VERSATILE, -1);
 
 struct Unit{};
 
-scopeInfo findScope(const std::pair<Scope*, astNode*>&, const std::string &name);
-
 void updateType(astNode*, astNode*, astNode*, astNode*);
-
-bool checkAsTrans(const Type&, const Type&);
 
 void loadBuiltin(astNode*);
 

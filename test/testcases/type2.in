@@ -1,0 +1,9 @@
+struct haha{x:i32}
+
+fn haha()->i32{return 5i32;}
+
+fn foo()->i32
+{
+    let a:haha = haha{x:5i32} as haha;
+    return a.x+haha();
+}

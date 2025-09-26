@@ -435,7 +435,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             {
                 node->realType = UNIT;
                 for (auto child:node->children)
-                    if (child->realType == NEVER)
+                    if (child->realType == NEVER || child->hasBreak || child->hasReturn)
                         node->realType = NEVER;
             }
             for (int i=0; i+1 < node->children.size(); i++)

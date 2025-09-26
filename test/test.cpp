@@ -30,6 +30,8 @@ void runSemantic(std::string path)
 }
 
 TEST(Parser, IF1){EXPECT_NO_THROW(runParser("if1.in"));}
+TEST(Parser, IF2){EXPECT_NO_THROW(runParser("if2.in"));}
+TEST(Parser, IF3){EXPECT_NO_THROW(runParser("if3.in"));}
 TEST(Parser, LOOP1){EXPECT_NO_THROW(runParser("loop1.in"));}
 TEST(Parser, LOOP2){EXPECT_NO_THROW(runParser("loop2.in"));}
 TEST(Parser, LOOP3){EXPECT_NO_THROW(runParser("loop3.in"));}
@@ -45,6 +47,8 @@ TEST(Parser, EXPR2){EXPECT_ANY_THROW(runParser("expr2.in"));}
 TEST(Parser, EXPR3){EXPECT_NO_THROW(runParser("expr3.in"));}
 
 TEST(Semantic, IF1){EXPECT_NO_THROW(runSemantic("if1.in"));}
+TEST(Semantic, IF2){EXPECT_NO_THROW(runSemantic("if2.in"));}
+TEST(Semantic, IF3){EXPECT_ANY_THROW(runSemantic("if3.in"));}
 TEST(Semantic, LOOP1){EXPECT_ANY_THROW(runSemantic("loop1.in"));}
 TEST(Semantic, LOOP2){EXPECT_NO_THROW(runSemantic("loop2.in"));}
 TEST(Semantic, LOOP3){EXPECT_NO_THROW(runSemantic("loop3.in"));}

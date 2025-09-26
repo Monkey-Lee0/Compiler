@@ -21,11 +21,11 @@ void parser::appendStruct(astNode *node)
     src.expect({tokenType::KEYWORD,"struct"});
     node->value=src.expect(tokenType::IDENTIFIER).value;
 
-    auto newNode = new astNode;
-    newNode->type = astNodeType::PARAMETERS;
-    node->children.push_back(newNode);
     if (src.peek() != (token){tokenType::OPERATOR, ";"})
     {
+        auto newNode = new astNode;
+        newNode->type = astNodeType::PARAMETERS;
+        node->children.push_back(newNode);
         src.expect({tokenType::OPERATOR,"{"});
         appendParameters(newNode);
         src.expect({tokenType::OPERATOR,"}"});

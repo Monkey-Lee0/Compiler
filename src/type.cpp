@@ -329,19 +329,23 @@ void resolveDependency(astNode* node)
     // resolve struct dependency
         else if (child->type == astNodeType::STRUCT)
         {
-            child->children[0]->scope = child->scope;
-            updateType(child->children[0], nullptr, nullptr, nullptr);
             auto T=new Type(TypeName::STRUCT);
             T->structID = ++structNum;
             T->structName = child->value;
             T->field = new Scope();
             child->scope = std::make_pair(T->field, node);
-            for (auto id:child->children[0]->children)
+            if (child->children.empty()){T->typePtr=&UNIT;}
+            else
             {
-                auto T0=typeToItem(id->children[0]->realType);
-                child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true});
+                child->children[0]->scope = child->scope;
+                updateType(child->children[0], nullptr, nullptr, nullptr);
+                for (auto id:child->children[0]->children)
+                {
+                    auto T0=typeToItem(id->children[0]->realType);
+                    child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true});
+                }
+                T->memberFieldNum = T->field->itemTable.size();
             }
-            T->memberFieldNum = T->field->itemTable.size();
             if (findScopeType(child->scope, child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
@@ -809,7 +813,12 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         {
             R=findScopeItem(node->scope, node->value);
             if (R.type == ILLEGAL)
+            {
                 R=findScopeType(node->scope, node->value);
+                auto P=typeToItem(R.type);
+                if (P.name == TypeName::STRUCT && P.typePtr != nullptr)
+                    R.type=P;
+            }
         }
         if (R.type == ILLEGAL)
             throw compileError();

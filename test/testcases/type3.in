@@ -1,0 +1,12 @@
+struct A;
+
+impl A
+{
+    const x:i32=5;
+}
+
+fn foo()->i32
+{
+    let a:A = A;
+    return A::x;
+}

@@ -114,7 +114,7 @@ void checkAsTrans(const Type &A, const Type &B)
 
 void deriveStrongTrans(const Type &A, const Type &B)
 {
-    if (A == B || A == NEVER)
+    if (A == B || A == NEVER || A == VERSATILE || B == VERSATILE)
         return ;
     if (A == INT && (B == IINT || B == UINT || B == I32 || B == U32 || B == ISIZE || B == USIZE))
         return ;
@@ -122,6 +122,8 @@ void deriveStrongTrans(const Type &A, const Type &B)
         return ;
     if (A == UINT && (B == U32 || B == USIZE))
         return ;
+    if (A.name == TypeName::ARRAY && B.name == TypeName::ARRAY && A.len == B.len)
+        return deriveStrongTrans(*A.typePtr, *B.typePtr);
     throw compileError();
 }
 
@@ -312,7 +314,8 @@ void resolveDependency(astNode* node)
         {
             child->children[0]->scope = child->scope;
             updateType(child->children[0], nullptr, nullptr, nullptr);
-            updateType(child->children[1], nullptr, nullptr, nullptr);
+            child->children[1]->scope = child->scope;
+            updateType(child->children[1], nullptr, nullptr, nullptr);\
             Type T(TypeName::FUNCTION, new Type(typeToItem(child->children[1]->realType)), -1);
             child->scope = std::make_pair(new Scope(), node);
             for (auto id:child->children[0]->children)

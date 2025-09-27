@@ -45,6 +45,8 @@ TEST(Parser, TYPE4){EXPECT_NO_THROW(runParser("type4.in"));}
 TEST(Parser, EXPR1){EXPECT_NO_THROW(runParser("expr1.in"));}
 TEST(Parser, EXPR2){EXPECT_ANY_THROW(runParser("expr2.in"));}
 TEST(Parser, EXPR3){EXPECT_NO_THROW(runParser("expr3.in"));}
+TEST(Parser, ARRAY1){EXPECT_NO_THROW(runParser("array1.in"));}
+TEST(Parser, ARRAY2){EXPECT_NO_THROW(runParser("array2.in"));}
 
 TEST(Semantic, IF1){EXPECT_NO_THROW(runSemantic("if1.in"));}
 TEST(Semantic, IF2){EXPECT_NO_THROW(runSemantic("if2.in"));}
@@ -62,3 +64,5 @@ TEST(Semantic, TYPE4){EXPECT_ANY_THROW(runSemantic("type4.in"));}
 TEST(Semantic, EXPR1){EXPECT_NO_THROW(runSemantic("expr1.in"));}
 TEST(Semantic, EXPR2){EXPECT_ANY_THROW(runSemantic("expr2.in"));}
 TEST(Semantic, EXPR3){EXPECT_NO_THROW(runSemantic("expr3.in"));}
+TEST(Semantic, ARRAY1){EXPECT_NO_THROW(runSemantic("array1.in"));}
+TEST(Semantic, ARRAY2){EXPECT_NO_THROW(runSemantic("array2.in"));}

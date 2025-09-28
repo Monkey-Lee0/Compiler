@@ -362,7 +362,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                     throw compileError();
                 else
                 {
-                    auto T1= SelfType;
+                    auto &T1= SelfType;
                     bool has1 = false, has2 = false;
                     for (auto t:id->children)
                         if (t->value == "&")

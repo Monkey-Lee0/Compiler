@@ -11,9 +11,10 @@ int main()
         code.push_back(static_cast<char>(in));
     code.push_back('\n');
     auto par=parser(code);
+    astNode* root;
     try
     {
-        auto root=par.solve();
+        root=par.solve();
         semanticCheckType(root);
         auto res=root->showTree();
         for (const auto& t:res)

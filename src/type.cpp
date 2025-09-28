@@ -30,9 +30,7 @@ bool operator==(const Type& A, const Type& B)
     if (A.name == TypeName::REF || A.name == TypeName::MUT_REF)
         return *A.typePtr == *B.typePtr;
     if (A.name == TypeName::ENUM)
-    {
-        return true;
-    }
+        return A.structID == B.structID;
     return true;
 }
 bool operator!=(const Type& A, const Type& B){return !(A==B);}
@@ -379,11 +377,29 @@ void resolveDependency(astNode* node)
             child->children[0]->scope = child->children[1]->scope = child->scope;
             resolveDependency(child->children[1]);
         }
+    //resolve enum dependency
+        else if (child->type == astNodeType::ENUM)
+        {
+            auto T=new Type(TypeName::ENUM);
+            T->structID = ++structNum;
+            T->structName = child->value;
+            T->memberNames = new std::unordered_map<std::string, unsigned int>();
+            for (int i=0; i<child->children.size(); i++)
+            {
+                if (T->memberNames->contains(child->children[i]->value))
+                    throw compileError();
+                T->memberNames->emplace(child->children[i]->value, i);
+            }
+            if (findScopeType(child->scope, child->value).isGlobal)
+                throw compileError();
+            node->scope.first->setType(child->value, {itemToType(T)
+                , std::any(), false, true});
+        }
 }
 
 void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr)
 {
-    if (node->realType != ILLEGAL)
+    if (node->realType != ILLEGAL || node->type == astNodeType::ENUM)
         return ;
     if (node->type == astNodeType::STATEMENT_BLOCK)
         node->scope = std::make_pair(new Scope(), father);
@@ -714,7 +730,11 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             }
             else if (T0.name == TypeName::ENUM && T1.name == TypeName::ENUM)
             {
-
+                if (T0.structID != T1.structID)
+                    throw compileError();
+                if (E0.has_value() && E1.has_value())
+                    node->eval = std::any_cast<long long>(E0) ==
+                        std::any_cast<long long>(E1);
             }
             else
             {
@@ -818,15 +838,26 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             auto T=node->children[0]->realType;
             while (T.name == TypeName::REF || T.name == TypeName::MUT_REF)
                 T = *T.typePtr;
-            if (T.name != TypeName::TYPE || T.typePtr->name != TypeName::STRUCT)
+            if (T.name != TypeName::TYPE || (T.typePtr->name != TypeName::STRUCT &&
+                T.typePtr->name != TypeName::ENUM))
                 throw compileError();
             T = *T.typePtr;
-            auto T0 = T.field->getItem(node->children[1]->value);
-            if (T0.type == ILLEGAL)
-                throw compileError();
-            node->realType = T0.type;
-            node->isVariable = node->children[1]->isVariable;
-            node->eval = T0.eval;
+            if (T.name == TypeName::STRUCT)
+            {
+                auto T0 = T.field->getItem(node->children[1]->value);
+                if (T0.type == ILLEGAL)
+                    throw compileError();
+                node->realType = T0.type;
+                node->isVariable = node->children[1]->isVariable;
+                node->eval = T0.eval;
+            }
+            else
+            {
+                if (!T.memberNames->contains(node->children[1]->value))
+                    throw compileError();
+                node->realType = T;
+                node->eval = static_cast<long long>((*T.memberNames)[node->children[1]->value]);
+            }
         }
     }
     else if (node->type == astNodeType::UNARY_OPERATOR)

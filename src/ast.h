@@ -25,6 +25,7 @@ public:
     unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;
+    std::unordered_map<std::string, unsigned int>* memberNames;
     Scope* field = nullptr;
     unsigned int memberFieldNum = 0;
     [[nodiscard]] std::string to_string() const;

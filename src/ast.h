@@ -9,7 +9,7 @@
 enum class TypeName
 {
     ILLEGAL, I32, U32, ISIZE, USIZE, INT, IINT, UINT, CHAR, STR,
-    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, TYPE, REF, MUT_REF,
+    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, METHOD, TYPE, REF, MUT_REF,
     VERSATILE, NEVER
 };
 
@@ -22,6 +22,7 @@ class Type final
 public:
     TypeName name;
     Type* typePtr;
+    Type* SelfPtr;
     unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;
@@ -50,8 +51,8 @@ class Scope final
 {
 public:
     std::unordered_map<std::string, scopeInfo> typeTable, itemTable;
-    scopeInfo getType(const std::string&);
-    scopeInfo getItem(const std::string&);
+    scopeInfo& getType(const std::string&);
+    scopeInfo& getItem(const std::string&);
     void setType(const std::string&, const scopeInfo&);
     void setItem(const std::string&, const scopeInfo&);
 };

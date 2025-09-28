@@ -73,6 +73,16 @@ std::string Type::to_string() const
             }
             res.append(")->" + typePtr->to_string());
             return res;
+        case TypeName::METHOD:
+            res = SelfPtr->to_string() + ".(";
+            for (int i=0;i<members.size();i++)
+            {
+                res.append(members[i]->to_string());
+                if (i+1 != members.size())
+                    res.append(",");
+            }
+            res.append(")->" + typePtr->to_string());
+            return res;
         case TypeName::UNIT:return "unit";
         case TypeName::TYPE:
             return "("+typePtr->to_string()+")_T";
@@ -89,17 +99,17 @@ bool isNumber(const Type& T){return T == I32 || T == U32 || T == ISIZE || T == U
 bool isNumberB(const Type& T){return isNumber(T) || T == BOOL;}
 bool isChar(const Type& T){return T == CHAR || T == STR || T == STRING;}
 
-scopeInfo findScopeType(const std::pair<Scope*,astNode*> &scope, const std::string &name)
+scopeInfo& findScopeType(const std::pair<Scope*,astNode*> &scope, const std::string &name)
 {;
-    auto res = scope.first->getType(name);
+    auto& res = scope.first->getType(name);
     if (res.type != ILLEGAL || scope.second == nullptr)
         return res;
     return findScopeType(scope.second->scope, name);
 }
 
-scopeInfo findScopeItem(const std::pair<Scope*,astNode*> &scope, const std::string &name)
+scopeInfo& findScopeItem(const std::pair<Scope*,astNode*> &scope, const std::string &name)
 {;
-    auto res = scope.first->getItem(name);
+    auto& res = scope.first->getItem(name);
     if (res.type != ILLEGAL || scope.second == nullptr)
         return res;
     return findScopeItem(scope.second->scope, name);
@@ -230,16 +240,17 @@ void deriveAllType(Type& A, Type& B)
 bool isItem(const astNode* node)
 {
     return node->type == astNodeType::CONST_STATEMENT || node->type == astNodeType::FUNCTION ||
-        node->type == astNodeType::STRUCT || node->type == astNodeType::TRAIT ||
-        node->type == astNodeType::IMPL;
+        node->type == astNodeType::STRUCT;
 }
 
-void resolveDependency(astNode* node)
+void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
 {
     auto getString=[](astNode* node)->std::string
     {
-        if (node->type == astNodeType::STRUCT || node->type == astNodeType::IMPL)
+        if (node->type == astNodeType::STRUCT)
             return "T-"+node->value;
+        if (node->type == astNodeType::IMPL)
+            return "impl-"+node->value;
         return node->value;
     };
     for (auto child:node->children)
@@ -300,7 +311,10 @@ void resolveDependency(astNode* node)
     for (int i=0; i<G.size(); i++)
         node->children.push_back(mp[name[seq[i]]]);
     for (auto child:children0)
-        if (!isItem(child))
+        if (child->type == astNodeType::IMPL)
+            node->children.push_back(child);
+    for (auto child:children0)
+        if (!isItem(child) && child->type != astNodeType::IMPL)
             node->children.push_back(child);
 
     //resolve constant dependency
@@ -316,29 +330,72 @@ void resolveDependency(astNode* node)
             if (!child->children[1]->eval.has_value())
                 throw compileError();
             scopeInfo value = {T0, child->children[1]->eval, false, true};
-            if (findScopeItem(child->scope, child->value).isGlobal) // shadow
+            if (node->scope.first->getItem(child->value).isGlobal) // shadow
                 throw compileError();
             child->scope.first->setItem(child->value, value);
         }
 
-    // resolve function dependency
+    // resolve function/method dependency
         else if (child->type == astNodeType::FUNCTION)
         {
             child->children[0]->scope = child->scope;
+            child->scope.first->setItem("self", {UNIT, std::any(), false, false});
             updateType(child->children[0], nullptr, nullptr, nullptr);
+            child->scope.first->itemTable.erase("self");
             child->children[1]->scope = child->scope;
-            updateType(child->children[1], nullptr, nullptr, nullptr);\
+            updateType(child->children[1], nullptr, nullptr, nullptr);
             Type T(TypeName::FUNCTION, new Type(typeToItem(child->children[1]->realType)), -1);
             child->scope = std::make_pair(new Scope(), node);
-            for (auto id:child->children[0]->children)
-            {
-                auto T0=typeToItem(id->children[0]->realType);
-                child->scope.first->setItem(id->value, {T0, std::any(), false, false});
-                T.members.push_back(new Type(T0));
-            }
-            if (findScopeItem(child->scope, child->value).isGlobal) // shadow
+            if (node->scope.first->getItem(child->value).isGlobal) // shadow
                 throw compileError();
-            node->scope.first->setItem(child->value, {T, std::any(), false, true});
+            for (int i=0; i<child->children[0]->children.size(); i++)
+            {
+                auto id = child->children[0]->children[i];
+                if (id->type != astNodeType::SELF)
+                {
+                    auto T0=typeToItem(id->children[0]->realType);
+                    child->scope.first->setItem(id->value, {T0, std::any(),
+                        false, false});
+                    T.members.push_back(new Type(T0));
+                }
+                else if (i || SelfType == ILLEGAL)
+                    throw compileError();
+                else
+                {
+                    auto T1= SelfType;
+                    bool has1 = false, has2 = false;
+                    for (auto t:id->children)
+                        if (t->value == "&")
+                            has1 = true;
+                        else if (t->value == "mut")
+                            has2 = true;
+                    if (!has1 && !has2)
+                    {
+                        auto T0 = typeToItem(id->children[0]->realType);
+                        child->scope.first->setItem("self", {T1,
+                            std::any(), false, false});
+                        if (T0 != T1)
+                            throw compileError();
+                    }
+                    else if (has1 && !has2)
+                        child->scope.first->setItem("self", {castRef(T1),
+                            std::any(), false, false});
+                    else if (has1 && has2)
+                        child->scope.first->setItem("self", {castMutRef(T1),
+                            std::any(), false, false});
+                    else
+                        child->scope.first->setItem("self", {T1,
+                            std::any(), true, false});
+                    T.name = TypeName::METHOD;
+                    T.SelfPtr = &child->scope.first->getItem("self").type;
+                }
+            }
+            if (!child->children[0]->children.empty() && child->children[0]->children[0]->type == astNodeType::SELF)
+            {
+                T.SelfPtr = &SelfType;
+            }
+            node->scope.first->setItem(child->value,
+                {T, std::any(), false, true});
         }
 
     // resolve struct dependency
@@ -349,8 +406,7 @@ void resolveDependency(astNode* node)
             T->structName = child->value;
             T->field = new Scope();
             child->scope = std::make_pair(T->field, node);
-            if (child->children.empty()){T->typePtr=&UNIT;}
-            else
+            if (!child->children.empty())
             {
                 child->children[0]->scope = child->scope;
                 updateType(child->children[0], nullptr, nullptr, nullptr);
@@ -361,21 +417,21 @@ void resolveDependency(astNode* node)
                 }
                 T->memberFieldNum = T->field->itemTable.size();
             }
-            if (findScopeType(child->scope, child->value).isGlobal) // shadow
+            if (node->scope.first->getType(child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
                 , std::any(), false, true});
         }
     //resolve impl dependency
-        else if (child->type == astNodeType::IMPL && child->children.size() == 2)
+        else if (child->type == astNodeType::IMPL)
         {
-            auto T = findScopeType(child->scope, child->children[0]->value).type;
-            if (T.name != TypeName::TYPE || T.typePtr->name != TypeName::STRUCT)
+            auto &T = typeToItem(child->scope.first->getType(child->value).type);
+            if (T.name != TypeName::STRUCT)
                 throw compileError();
-            T=*T.typePtr;
             child->scope = std::make_pair(T.field, node);
-            child->children[0]->scope = child->children[1]->scope = child->scope;
-            resolveDependency(child->children[1]);
+            T.field->setType("Self", {itemToType(T), std::any(), false, false});
+            child->children[0]->scope = child->scope;
+            resolveDependency(child->children[0], T);
         }
     //resolve enum dependency
         else if (child->type == astNodeType::ENUM)
@@ -390,7 +446,7 @@ void resolveDependency(astNode* node)
                     throw compileError();
                 T->memberNames->emplace(child->children[i]->value, i);
             }
-            if (findScopeType(child->scope, child->value).isGlobal)
+            if (findScopeType(node->scope, child->value).isGlobal)
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
                 , std::any(), false, true});
@@ -404,7 +460,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     if (node->type == astNodeType::STATEMENT_BLOCK)
         node->scope = std::make_pair(new Scope(), father);
     for (auto child:node->children)
-        child->scope = node->scope;
+        if (child->scope.first == nullptr)
+            child->scope = node->scope;
     if (node->type == astNodeType::PROGRAM || node->type == astNodeType::STATEMENT_BLOCK)
         resolveDependency(node);
 
@@ -828,8 +885,17 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
                 throw compileError();
             auto T0 = T.field->getItem("-"+node->children[1]->value);
-            if (T0.type == ILLEGAL)
-                throw compileError();
+            if (T0.type == ILLEGAL || father->type == astNodeType::FUNCTION_CALL)
+            {
+                T0 = T.field->getItem(node->children[1]->value);
+                if (T0.type.name != TypeName::METHOD)
+                    throw compileError();
+            }
+            if (T0.type.name == TypeName::METHOD)
+            {
+                T0.type.name = TypeName::FUNCTION;
+                T0.type.SelfPtr = nullptr;
+            }
             node->realType = T0.type;
             node->isMutable &= T0.isMutable;
         }
@@ -847,6 +913,12 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                 auto T0 = T.field->getItem(node->children[1]->value);
                 if (T0.type == ILLEGAL)
                     throw compileError();
+                if (T0.type.name == TypeName::METHOD)
+                {
+                    T0.type.name = TypeName::FUNCTION;
+                    T0.type.members.insert(T0.type.members.begin(), T0.type.SelfPtr);
+                    T0.type.SelfPtr = nullptr;
+                }
                 node->realType = T0.type;
                 node->isVariable = node->children[1]->isVariable;
                 node->eval = T0.eval;
@@ -926,12 +998,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         {
             R=findScopeItem(node->scope, node->value);
             if (R.type == ILLEGAL)
-            {
                 R=findScopeType(node->scope, node->value);
-                auto P=typeToItem(R.type);
-                if (P.name == TypeName::STRUCT && P.typePtr != nullptr)
-                    R.type=P;
-            }
         }
         if (R.type == ILLEGAL)
             throw compileError();
@@ -1175,6 +1242,15 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             Name.size() != node->children[1]->children.size())
             throw compileError();
         node->realType = *T0;
+    }
+    else if (node->type == astNodeType::SELF)
+    {
+        auto &R = findScopeItem(node->scope, "self");
+        if (R.type == ILLEGAL)
+            throw compileError();
+        node->realType = R.type;
+        node->isMutable = R.isMutable;
+        node->isVariable = true;
     }
 }
 

@@ -18,7 +18,7 @@ int main()
         semanticCheckType(root);
         auto res=root->showTree();
         for (const auto& t:res)
-                std::cout<<t<<std::endl;
+            std::cout<<t<<std::endl;
     }
     catch(...)
     {

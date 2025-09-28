@@ -86,16 +86,11 @@ void parser::appendFunction(astNode *node)
     node->children.push_back(newNode);
 
     // statement block
-    if (src.peek() == (token){tokenType::OPERATOR, ";"})
-        src.consume();
-    else
-    {
-        src.expect({tokenType::OPERATOR,"{"});
-        newNode=new astNode;
-        appendStatementBlock(newNode);
-        node->children.push_back(newNode);
-        src.expect({tokenType::OPERATOR,"}"});
-    }
+    src.expect({tokenType::OPERATOR,"{"});
+    newNode=new astNode;
+    appendStatementBlock(newNode);
+    node->children.push_back(newNode);
+    src.expect({tokenType::OPERATOR,"}"});
 }
 
 void parser::appendType(astNode *node)
@@ -149,28 +144,55 @@ void parser::appendParameters(astNode *node)
 
     auto tk=src.peek();
     bool flag=true;
-    if (tk.type == tokenType::KEYWORD && tk.value == "self")
+    if (tk == (token){tokenType::OPERATOR, "&"} ||
+        tk == (token){tokenType::KEYWORD, "mut"} ||
+        tk == (token){tokenType::KEYWORD, "self"})
     {
-        src.consume();
         flag = false;
         auto newNode = new astNode;
         newNode -> type = astNodeType::SELF;
         node -> children.push_back(newNode);
 
+        if (tk == (token){tokenType::OPERATOR, "&"})
+        {
+            src.consume();
+            tk=src.peek();
+            auto newQuant = new astNode;
+            newQuant->type = astNodeType::QUANTIFIER;
+            newQuant->value = "&";
+            newNode->children.push_back(newQuant);
+        }
+
+        if (tk == (token){tokenType::KEYWORD, "mut"})
+        {
+            src.consume();
+            tk=src.peek();
+            auto newQuant = new astNode;
+            newQuant->type = astNodeType::QUANTIFIER;
+            newQuant->value = "mut";
+            newNode->children.push_back(newQuant);
+        }
+        src.expect({tokenType::KEYWORD, "self"});
         auto newType = new astNode;
         newType -> type = astNodeType::TYPE;
         newNode->children.push_back(newType);
-        if (src.peek() == (token){tokenType::OPERATOR, ":"})
+
+        if (node->children.empty())
         {
-            src.consume();
-            appendType(newType);
+            if (src.peek() == (token){tokenType::OPERATOR, ":"})
+            {
+                src.consume();
+                appendType(newType);
+            }
+            else
+                newType -> value = "Self";
+
+            tk=src.peek();
+            if (tk.type == tokenType::OPERATOR && tk.value == ",")
+                src.consume(),tk=src.peek(),flag = true;
         }
         else
             newType -> value = "Self";
-
-        tk=src.peek();
-        if (tk.type == tokenType::OPERATOR && tk.value == ",")
-            src.consume(),tk=src.peek(),flag = true;
     }
 
     while (tk.type == tokenType::IDENTIFIER)
@@ -729,70 +751,71 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             cur = newNode;
             if (isItem(prefix))
             {
-                while (true)
-                {
-                    if (src.peek() == (token){tokenType::OPERATOR, "("})
+                if (cur != node)
+                    while (true)
                     {
-                        src.consume();
-                        auto newNode = new astNode(*cur);
-                        cur -> type = astNodeType::FUNCTION_CALL;
-                        cur -> children.clear();
-                        cur -> children.push_back(newNode);
-                        cur -> value = "";
-                        newNode = new astNode;
-                        cur -> children.push_back(newNode);
-                        appendGroupExpression(newNode);
-                        src.expect({tokenType::OPERATOR, ")"});
-                    }
-                    else if (src.peek() == (token){tokenType::OPERATOR, "["})
-                    {
-                        src.consume();
-                        auto newNode = new astNode(*cur);
-                        cur -> type = astNodeType::ARRAY_INDEX;
-                        cur -> children.clear();
-                        cur -> children.push_back(newNode);
-                        cur -> value = "";
-                        newNode = new astNode;
-                        cur -> children.push_back(newNode);
-                        appendSimpleExpression(newNode);
-                        src.expect({tokenType::OPERATOR, "]"});
-                    }
-                    else if (src.peek() == (token){tokenType::OPERATOR, "{"})
-                    {
-                        src.consume();
-                        auto newNode = new astNode(*cur);
-                        cur -> type = astNodeType::STRUCT_BUILD;
-                        cur -> children.clear();
-                        cur -> children.push_back(newNode);
-                        cur -> value = "";
-                        newNode = new astNode;
-                        newNode -> type = astNodeType::FIELDS;
-                        cur -> children.push_back(newNode);
-                        // {ID: Expr, ...}
-                        bool flag = true;
-                        while (src.peek() != (token){tokenType::OPERATOR,"}"})
+                        if (src.peek() == (token){tokenType::OPERATOR, "("})
                         {
-                            if (!flag)
-                                throw compileError();
-                            flag=false;
-                            auto newField = new astNode;
-                            newField -> type = astNodeType::FIELD;
-                            newNode -> children.push_back(newField);
-                            newField -> value = src.expect(tokenType::IDENTIFIER).value;
-
-                            src.expect({tokenType::OPERATOR, ":"});
-                            auto newExpr = new astNode;
-                            newField -> children.push_back(newExpr);
-                            appendSimpleExpression(newExpr);
-
-                            if (src.peek() == (token){tokenType::OPERATOR, ","})
-                                flag=true, src.consume();
+                            src.consume();
+                            auto newNode = new astNode(*cur);
+                            cur -> type = astNodeType::FUNCTION_CALL;
+                            cur -> children.clear();
+                            cur -> children.push_back(newNode);
+                            cur -> value = "";
+                            newNode = new astNode;
+                            cur -> children.push_back(newNode);
+                            appendGroupExpression(newNode);
+                            src.expect({tokenType::OPERATOR, ")"});
                         }
-                        src.expect({tokenType::OPERATOR, "}"});
+                        else if (src.peek() == (token){tokenType::OPERATOR, "["})
+                        {
+                            src.consume();
+                            auto newNode = new astNode(*cur);
+                            cur -> type = astNodeType::ARRAY_INDEX;
+                            cur -> children.clear();
+                            cur -> children.push_back(newNode);
+                            cur -> value = "";
+                            newNode = new astNode;
+                            cur -> children.push_back(newNode);
+                            appendSimpleExpression(newNode);
+                            src.expect({tokenType::OPERATOR, "]"});
+                        }
+                        else if (src.peek() == (token){tokenType::OPERATOR, "{"})
+                        {
+                            src.consume();
+                            auto newNode = new astNode(*cur);
+                            cur -> type = astNodeType::STRUCT_BUILD;
+                            cur -> children.clear();
+                            cur -> children.push_back(newNode);
+                            cur -> value = "";
+                            newNode = new astNode;
+                            newNode -> type = astNodeType::FIELDS;
+                            cur -> children.push_back(newNode);
+                            // {ID: Expr, ...}
+                            bool flag = true;
+                            while (src.peek() != (token){tokenType::OPERATOR,"}"})
+                            {
+                                if (!flag)
+                                    throw compileError();
+                                flag=false;
+                                auto newField = new astNode;
+                                newField -> type = astNodeType::FIELD;
+                                newNode -> children.push_back(newField);
+                                newField -> value = src.expect(tokenType::IDENTIFIER).value;
+
+                                src.expect({tokenType::OPERATOR, ":"});
+                                auto newExpr = new astNode;
+                                newField -> children.push_back(newExpr);
+                                appendSimpleExpression(newExpr);
+
+                                if (src.peek() == (token){tokenType::OPERATOR, ","})
+                                    flag=true, src.consume();
+                            }
+                            src.expect({tokenType::OPERATOR, "}"});
+                        }
+                        else
+                            break;
                     }
-                    else
-                        break;
-                }
                 break;
             }
             if (!isPrefixOperator(prefix))
@@ -993,14 +1016,12 @@ void parser::appendImpl(astNode *node)
 {
     node -> type = astNodeType::IMPL;
     src.expect({tokenType::KEYWORD, "impl"});
-    auto newType = new astNode;
-    node -> children.push_back(newType);
-    appendType(newType);
+    node -> value = src.expect(tokenType::IDENTIFIER).value;
 
     if (src.peek() == (token){tokenType::KEYWORD, "for"})
     {
         src.consume();
-        newType = new astNode;
+        auto newType = new astNode;
         node -> children.push_back(newType);
         appendType(newType);
     }

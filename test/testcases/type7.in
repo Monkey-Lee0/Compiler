@@ -1,0 +1,13 @@
+struct A{x:i32}
+
+impl A
+{
+    fn x(self){}
+    fn y(){}
+}
+
+fn foo()
+{
+    let x:A = A{x:5};
+    x.y();
+}

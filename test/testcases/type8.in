@@ -1,0 +1,6 @@
+struct A{x:i32}
+
+impl A
+{
+    fn foo(&mut self)->i32{return self.x;}
+}

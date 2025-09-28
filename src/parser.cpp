@@ -100,9 +100,28 @@ void parser::appendFunction(astNode *node)
 
 void parser::appendType(astNode *node)
 {
-    node->type=astNodeType::TYPE;
-
     auto tk=src.consume();
+    while (tk == (token){tokenType::OPERATOR, "&"} || tk == (token){tokenType::OPERATOR, "&&"})
+    {
+        if (tk.value == "&&")
+        {
+            auto newNode=new astNode;
+            node->children.push_back(newNode);
+            node->type = astNodeType::UNARY_OPERATOR;
+            node->value = "&";
+            node=newNode;
+        }
+        auto newNode=new astNode;
+        node->children.push_back(newNode);
+        node->type = astNodeType::UNARY_OPERATOR;
+        if (src.peek() == (token){tokenType::KEYWORD, "mut"})
+            src.consume(), node->value="&mut";
+        else
+            node->value = "&";
+        tk=src.consume();
+        node=newNode;
+    }
+    node->type=astNodeType::TYPE;
     if (tk == (token){tokenType::OPERATOR, "("})
         src.expect({tokenType::OPERATOR, ")"}), node->value = "()";
     else if (tk == (token){tokenType::OPERATOR, "["})
@@ -273,11 +292,12 @@ void parser::appendConstStatement(astNode* node)
     src.expect({tokenType::OPERATOR, ";"});
 }
 
-static bool isPrefixOperend(const token& t)
+static bool isPrefixOperator(const token& t)
 {
     return
         (t.type == tokenType::OPERATOR && t.value == "-") ||
-        (t.type == tokenType::OPERATOR && t.value == "!");
+        (t.type == tokenType::OPERATOR && t.value == "!") ||
+        (t.type == tokenType::OPERATOR && t.value == "*");
 }
 static bool isItem(const token& t)
 {
@@ -639,7 +659,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
         // return statement
         else if (prefix.type == tokenType::KEYWORD && prefix.value == "return")
         {
-            if (isItem(src.peek()) || isPrefixOperend(src.peek()))
+            if (isItem(src.peek()) || isPrefixOperator(src.peek()))
             {
                 auto newNode=new astNode;
                 if (cur != nullptr)
@@ -657,7 +677,7 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
         // break statement
         else if (prefix.type == tokenType::KEYWORD && prefix.value == "break")
         {
-            if (isItem(src.peek()) || isPrefixOperend(src.peek()))
+            if (isItem(src.peek()) || isPrefixOperator(src.peek()))
             {
                 auto newNode=new astNode;
                 if (cur != nullptr)
@@ -673,16 +693,103 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             }
         }
 
-        auto newNode = createPrefix(prefix);
-        if (cur != nullptr)
-            cur -> children.push_back(newNode);
+        if (prefix == (token){tokenType::OPERATOR, "&"} ||
+            prefix == (token){tokenType::OPERATOR, "&&"})
+        {
+            if (prefix.value == "&&")
+            {
+                auto newNode=new astNode;
+                newNode->type = astNodeType::UNARY_OPERATOR;
+                newNode->value = "&";
+                if (cur != nullptr)
+                    cur -> children.push_back(newNode);
+                else
+                    node = newNode;
+                cur = newNode;
+            }
+            auto newNode=new astNode;
+            newNode->type = astNodeType::UNARY_OPERATOR;
+            if (src.peek() == (token){tokenType::KEYWORD, "mut"})
+                src.consume(), newNode->value="&mut";
+            else
+                newNode->value = "&";
+            if (cur != nullptr)
+                cur -> children.push_back(newNode);
+            else
+                node = newNode;
+            cur = newNode;
+        }
         else
-            node = newNode;
-        cur = newNode;
-        if (isItem(prefix))
-            break;
-        if (!isPrefixOperend(prefix))
-            throw compileError();
+        {
+            auto newNode = createPrefix(prefix);
+            if (cur != nullptr)
+                cur -> children.push_back(newNode);
+            else
+                node = newNode;
+            cur = newNode;
+            if (isItem(prefix))
+            {
+                if (src.peek() == (token){tokenType::OPERATOR, "("})
+                {
+                    src.consume();
+                    auto newNode = new astNode(*cur);
+                    cur -> type = astNodeType::FUNCTION_CALL;
+                    cur -> children.push_back(newNode);
+                    cur -> value = "";
+                    newNode = new astNode;
+                    cur -> children.push_back(newNode);
+                    appendGroupExpression(newNode);
+                    src.expect({tokenType::OPERATOR, ")"});
+                }
+                else if (src.peek() == (token){tokenType::OPERATOR, "["})
+                {
+                    src.consume();
+                    auto newNode = new astNode(*cur);
+                    cur -> type = astNodeType::ARRAY_BUILD;
+                    cur -> children.push_back(newNode);
+                    cur -> value = "";
+                    newNode = new astNode;
+                    cur -> children.push_back(newNode);
+                    appendSimpleExpression(newNode);
+                    src.expect({tokenType::OPERATOR, "]"});
+                }
+                else if (src.peek() == (token){tokenType::OPERATOR, "{"})
+                {
+                    src.consume();
+                    auto newNode = new astNode(*cur);
+                    cur -> type = astNodeType::STRUCT_BUILD;
+                    cur -> children.push_back(newNode);
+                    cur -> value = "";
+                    newNode = new astNode;
+                    newNode -> type = astNodeType::FIELDS;
+                    cur -> children.push_back(newNode);
+                    // {ID: Expr, ...}
+                    bool flag = true;
+                    while (src.peek() != (token){tokenType::OPERATOR,"}"})
+                    {
+                        if (!flag)
+                            throw compileError();
+                        flag=false;
+                        auto newField = new astNode;
+                        newField -> type = astNodeType::FIELD;
+                        newNode -> children.push_back(newField);
+                        newField -> value = src.expect(tokenType::IDENTIFIER).value;
+
+                        src.expect({tokenType::OPERATOR, ":"});
+                        auto newExpr = new astNode;
+                        newField -> children.push_back(newExpr);
+                        appendSimpleExpression(newExpr);
+
+                        if (src.peek() == (token){tokenType::OPERATOR, ","})
+                            flag=true, src.consume();
+                    }
+                    src.expect({tokenType::OPERATOR, "}"});
+                }
+                break;
+            }
+            if (!isPrefixOperator(prefix))
+                throw compileError();
+        }
     }
 
     while (true)

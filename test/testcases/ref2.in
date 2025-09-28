@@ -1,0 +1,6 @@
+fn foo()
+{
+    let mut a:i32 = 5;
+    let b:&i32 = &mut a;
+    let c:&i32 = &mut(5+&a);
+}

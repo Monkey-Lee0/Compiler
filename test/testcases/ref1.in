@@ -1,0 +1,23 @@
+struct A{x:i32}
+
+fn foo()
+{
+    let mut a:i32 = 5;
+    let mut b:i32 = 5;
+    let c:&&mut i32 = &&mut b;
+
+    let cc:[&i32;5]=[&5;5];
+
+    let d:&i32 = &mut 5;
+    let dd:&&i32 = &mut& 5;
+
+    let e:&i32=(&mut& cc)[2];
+
+    let f:i32 = 5+(&5);
+    let g:i32 = (&5)+(&5);
+
+    let h:bool = ((&a) == (&b)) | ((&&a) == (&&b)) | ((&mut& a) == (&&mut b));
+
+    let i:&&A = && A{x:5};
+    let j:i32 = i.x;
+}

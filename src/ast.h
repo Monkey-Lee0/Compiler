@@ -9,7 +9,7 @@
 enum class TypeName
 {
     ILLEGAL, I32, U32, ISIZE, USIZE, INT, IINT, UINT, CHAR, STR,
-    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, TYPE,
+    UNIT, STRING, BOOL, ARRAY, ENUM, STRUCT, FUNCTION, TYPE, REF, MUT_REF,
     VERSATILE, NEVER
 };
 
@@ -77,6 +77,7 @@ public:
     unsigned int curSonId=0;
     bool hasBreak=false, hasReturn=false;
     bool isMutable=false;
+    bool isVariable=false;
     std::vector<std::string> showSelf() const;
     std::vector<std::string> showTree() const;
 };

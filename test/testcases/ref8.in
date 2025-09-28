@@ -1,0 +1,5 @@
+fn loo()
+{
+    const aa:i32=5;
+    const bb:[& i32;5]=[& aa;5];
+}

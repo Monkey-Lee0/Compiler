@@ -47,6 +47,14 @@ TEST(Parser, EXPR2){EXPECT_ANY_THROW(runParser("expr2.in"));}
 TEST(Parser, EXPR3){EXPECT_NO_THROW(runParser("expr3.in"));}
 TEST(Parser, ARRAY1){EXPECT_NO_THROW(runParser("array1.in"));}
 TEST(Parser, ARRAY2){EXPECT_NO_THROW(runParser("array2.in"));}
+TEST(Parser, REF1){EXPECT_NO_THROW(runParser("ref1.in"));}
+TEST(Parser, REF2){EXPECT_NO_THROW(runParser("ref2.in"));}
+TEST(Parser, REF3){EXPECT_NO_THROW(runParser("ref3.in"));}
+TEST(Parser, REF4){EXPECT_NO_THROW(runParser("ref4.in"));}
+TEST(Parser, REF5){EXPECT_NO_THROW(runParser("ref5.in"));}
+TEST(Parser, REF6){EXPECT_NO_THROW(runParser("ref6.in"));}
+TEST(Parser, REF7){EXPECT_NO_THROW(runParser("ref7.in"));}
+TEST(Parser, REF8){EXPECT_NO_THROW(runParser("ref8.in"));}
 
 TEST(Semantic, IF1){EXPECT_NO_THROW(runSemantic("if1.in"));}
 TEST(Semantic, IF2){EXPECT_NO_THROW(runSemantic("if2.in"));}
@@ -66,3 +74,11 @@ TEST(Semantic, EXPR2){EXPECT_ANY_THROW(runSemantic("expr2.in"));}
 TEST(Semantic, EXPR3){EXPECT_NO_THROW(runSemantic("expr3.in"));}
 TEST(Semantic, ARRAY1){EXPECT_NO_THROW(runSemantic("array1.in"));}
 TEST(Semantic, ARRAY2){EXPECT_NO_THROW(runSemantic("array2.in"));}
+TEST(Semantic, REF1){EXPECT_NO_THROW(runSemantic("ref1.in"));}
+TEST(Semantic, REF2){EXPECT_NO_THROW(runSemantic("ref2.in"));}
+TEST(Semantic, REF3){EXPECT_ANY_THROW(runSemantic("ref3.in"));}
+TEST(Semantic, REF4){EXPECT_ANY_THROW(runSemantic("ref4.in"));}
+TEST(Semantic, REF5){EXPECT_ANY_THROW(runSemantic("ref5.in"));}
+TEST(Semantic, REF6){EXPECT_ANY_THROW(runSemantic("ref6.in"));}
+TEST(Semantic, REF7){EXPECT_ANY_THROW(runSemantic("ref7.in"));}
+TEST(Semantic, REF8){EXPECT_ANY_THROW(runSemantic("ref8.in"));}

@@ -27,6 +27,8 @@ bool operator==(const Type& A, const Type& B)
             check &= A.members[i] == B.members[i];
         return check;
     }
+    if (A.name == TypeName::REF || A.name == TypeName::MUT_REF)
+        return *A.typePtr == *B.typePtr;
     if (A.name == TypeName::ENUM)
     {
         return true;
@@ -75,8 +77,10 @@ std::string Type::to_string() const
             return res;
         case TypeName::UNIT:return "unit";
         case TypeName::TYPE:
-            return typePtr->to_string()+"_T";
+            return "("+typePtr->to_string()+")_T";
         case TypeName::VERSATILE: return "versatile";
+        case TypeName::REF:return "&"+typePtr->to_string();
+        case TypeName::MUT_REF:return "&mut "+typePtr->to_string();
         case TypeName::NEVER: return "never";
         default: return "who are you?";
     }
@@ -112,7 +116,7 @@ void checkAsTrans(const Type &A, const Type &B)
     throw compileError();
 }
 
-void deriveStrongTrans(const Type &A, const Type &B)
+void deriveStrongTrans(const Type &A, const Type &B, bool canRemoveMut=true)
 {
     if (A == B || A == NEVER || A == VERSATILE || B == VERSATILE)
         return ;
@@ -122,8 +126,14 @@ void deriveStrongTrans(const Type &A, const Type &B)
         return ;
     if (A == UINT && (B == U32 || B == USIZE))
         return ;
+    if (canRemoveMut && A.name == TypeName::MUT_REF && B.name == TypeName::REF)
+        return deriveStrongTrans(*A.typePtr, *B.typePtr, false);
+    if (A.name == TypeName::REF && B.name == TypeName::REF)
+        return deriveStrongTrans(*A.typePtr, *B.typePtr, false);
+    if (A.name == TypeName::MUT_REF && B.name == TypeName::MUT_REF)
+        return deriveStrongTrans(*A.typePtr, *B.typePtr, false);
     if (A.name == TypeName::ARRAY && B.name == TypeName::ARRAY && A.len == B.len)
-        return deriveStrongTrans(*A.typePtr, *B.typePtr);
+        return deriveStrongTrans(*A.typePtr, *B.typePtr, false);
     throw compileError();
 }
 
@@ -141,14 +151,18 @@ Type itemToType(const Type& A)
     return {TypeName::TYPE, new Type(A), 0};
 }
 
-Type typeToItem(const Type& A)
+Type& typeToItem(const Type& A)
 {
     if (A == UNIT)
-        return A;
+        return UNIT;
     if (A.name != TypeName::TYPE)
         throw compileError();
     return *A.typePtr;
 }
+
+Type castRef(Type& A){return {TypeName::REF, &A, 0};}
+
+Type castMutRef(Type& A){return {TypeName::MUT_REF, &A, 0};}
 
 Type strToType(const std::string &name)
 {
@@ -421,7 +435,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             auto T1 = node->children[2]->realType;
             deriveStrongTrans(T1, T0);
         }
-        scopeInfo value = {T0, std::any(), node->children[0]->value == "mut", false};
+        scopeInfo value = {T0, std::any(),
+            node->children[0]->value == "mut", false};
         if (findScopeItem(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
         node->scope.first->setItem(node->value, value);
@@ -542,6 +557,10 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         if (node->value == "+" || node->value == "-" || node->value == "*" || node->value == "/" ||
             node->value == "%" || node->value == "<<" || node->value == ">>")
         {
+            if (T0.name == TypeName::REF)
+                T0 = *T0.typePtr;
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
             if (!isNumber(T0))
                 throw compileError();
             deriveNumberType(T0, T1);
@@ -568,6 +587,10 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "&" || node->value == "^" || node->value == "|")
         {
+            if (T0.name == TypeName::REF)
+                T0 = *T0.typePtr;
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
             if (T0 == BOOL && T1 == BOOL)
             {
                 node->realType = T0;
@@ -600,6 +623,9 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "<" || node->value == ">" || node->value == "<=" || node->value == ">=")
         {
+            while ((T0.name == TypeName::REF || T0.name == TypeName::MUT_REF)&&
+                (T1.name == TypeName::REF || T1.name == TypeName::MUT_REF))
+                T0 = *T0.typePtr, T1 = *T1.typePtr;
             node->realType = BOOL;
             if (T0 == CHAR && T1 == CHAR)
             {
@@ -650,6 +676,9 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "==" || node->value == "!=")
         {
+            while ((T0.name == TypeName::REF || T0.name == TypeName::MUT_REF)&&
+                (T1.name == TypeName::REF || T1.name == TypeName::MUT_REF))
+                T0 = *T0.typePtr, T1 = *T1.typePtr;
             node->realType = BOOL;
             if (T0 == CHAR && T1 == CHAR)
             {
@@ -702,6 +731,10 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "&&" || node->value == "||")
         {
+            if (T0.name == TypeName::REF)
+                T0 = *T0.typePtr;
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
             if (T0 != T1 || T0 != BOOL)
                 throw compileError();
             node->realType = BOOL;
@@ -718,12 +751,16 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         {
             if (!node->children[0]->isMutable)
                 throw compileError();
+            if (T1.name == TypeName::MUT_REF && T0.name == TypeName::REF)
+                T1.name = T0.name;
             deriveStrongTrans(T1, T0);
             node->realType = UNIT;
         }
         else if (node->value == "+=" || node->value == "-=" || node->value == "*=" || node->value == "/=" ||
             node->value == "%=" || node->value == "<<=" || node->value == ">>")
         {
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
             if (!node->children[0]->isMutable)
                 throw compileError();
             deriveNumberType(T0, T1);
@@ -731,6 +768,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "&=" || node->value == "^=" || node->value == "|=")
         {
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
             if (!node->children[0]->isMutable)
                 throw compileError();
             deriveAllType(T0, T1);
@@ -756,17 +795,29 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         else if (node->value == ".")
         {
             auto T=node->children[0]->realType;
+            node->isMutable = node->children[0]->isMutable;
+            node->isVariable = node->children[0]->isVariable;
+            while (T.name == TypeName::REF || T.name == TypeName::MUT_REF)
+            {
+                if (T.name == TypeName::REF)
+                    node->isMutable = false;
+                else
+                    node->isMutable = true;
+                T = *T.typePtr;
+            }
             if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
                 throw compileError();
             auto T0 = T.field->getItem("-"+node->children[1]->value);
             if (T0.type == ILLEGAL)
                 throw compileError();
             node->realType = T0.type;
-            node->isMutable = node->children[0]->isMutable & T0.isMutable;
+            node->isMutable &= T0.isMutable;
         }
         else if (node->value == "::")
         {
             auto T=node->children[0]->realType;
+            while (T.name == TypeName::REF || T.name == TypeName::MUT_REF)
+                T = *T.typePtr;
             if (T.name != TypeName::TYPE || T.typePtr->name != TypeName::STRUCT)
                 throw compileError();
             T = *T.typePtr;
@@ -774,12 +825,13 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             if (T0.type == ILLEGAL)
                 throw compileError();
             node->realType = T0.type;
+            node->isVariable = node->children[1]->isVariable;
             node->eval = T0.eval;
         }
     }
     else if (node->type == astNodeType::UNARY_OPERATOR)
     {
-        auto T=node->children[0]->realType;
+        auto &T=node->children[0]->realType;
         auto E=node->children[0]->eval;
         if (node->value == "-")
         {
@@ -801,6 +853,33 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                 else if (E.type() == typeid(bool))
                     node->eval = !std::any_cast<bool>(E);
             }
+        }
+        else if (node->value == "&")
+        {
+            if (T.name == TypeName::TYPE)
+                node->realType = itemToType(castRef(typeToItem(T)));
+            else
+                node->realType = castRef(T);
+        }
+        else if (node->value == "&mut")
+        {
+            if (T.name == TypeName::TYPE)
+                node->realType = itemToType(castMutRef(typeToItem(T)));
+            else
+                node->realType = castMutRef(T);
+            if (node->children[0]->isVariable && !node->children[0]->isMutable)
+                throw compileError();
+        }
+        else if (node->value == "*")
+        {
+            if (T.name != TypeName::REF && T.name != TypeName::MUT_REF)
+                throw compileError();
+            if (T.name == TypeName::MUT_REF)
+                node->isMutable = true;
+            else
+                node->isMutable = false;
+            node->isVariable = true;
+            node->realType = *T.typePtr;
         }
     }
     else if (node->type == astNodeType::IDENTIFIER)
@@ -826,6 +905,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         if (R.type == ILLEGAL)
             throw compileError();
         node->isMutable = R.isMutable;
+        node->isVariable = true;
         node->eval = R.eval;
         node->realType = R.type;
     }
@@ -858,7 +938,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                 throw compileError();
             node->realType = T;
         }
-        else if (node->children.size() == 2 && node->children[0]->type == astNodeType::TYPE)
+        else if (node->children.size() == 2)
         {
             auto E = node->children[1]->eval;
             auto T = node->children[1]->realType;
@@ -955,6 +1035,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             node->realType = node->children[0]->realType;
             node->eval = node->children[0]->eval;
             node->isMutable = node->children[0]->isMutable;
+            node->isVariable = node->children[0]->isVariable;
         }
     }
     else if (node->type == astNodeType::ARRAY_BUILD)
@@ -1006,10 +1087,19 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     {
         auto T0 = node->children[0]->realType, T1 = node->children[1]->realType;
         auto E0 = node->children[0]->eval, E1 = node->children[1]->eval;
+        node->isMutable = node->children[0]->isMutable;
+        node->isVariable = node->children[0]->isVariable;
+        while (T0.name == TypeName::REF || T0.name == TypeName::MUT_REF)
+        {
+            if (T0.name == TypeName::REF)
+                node->isMutable = false;
+            else
+                node->isMutable = true;
+            T0 = *T0.typePtr;
+        }
         if (T0.name != TypeName::ARRAY || (T1 != USIZE && T1 != UINT && T1 != INT))
             throw compileError();
         node->realType = *T0.typePtr;
-        node->isMutable = node->children[0]->isMutable;
         if (E1.has_value())
         {
             auto L = static_cast<unsigned int>(std::any_cast<long long>(E1));

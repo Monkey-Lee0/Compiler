@@ -729,61 +729,69 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             cur = newNode;
             if (isItem(prefix))
             {
-                if (src.peek() == (token){tokenType::OPERATOR, "("})
+                while (true)
                 {
-                    src.consume();
-                    auto newNode = new astNode(*cur);
-                    cur -> type = astNodeType::FUNCTION_CALL;
-                    cur -> children.push_back(newNode);
-                    cur -> value = "";
-                    newNode = new astNode;
-                    cur -> children.push_back(newNode);
-                    appendGroupExpression(newNode);
-                    src.expect({tokenType::OPERATOR, ")"});
-                }
-                else if (src.peek() == (token){tokenType::OPERATOR, "["})
-                {
-                    src.consume();
-                    auto newNode = new astNode(*cur);
-                    cur -> type = astNodeType::ARRAY_BUILD;
-                    cur -> children.push_back(newNode);
-                    cur -> value = "";
-                    newNode = new astNode;
-                    cur -> children.push_back(newNode);
-                    appendSimpleExpression(newNode);
-                    src.expect({tokenType::OPERATOR, "]"});
-                }
-                else if (src.peek() == (token){tokenType::OPERATOR, "{"})
-                {
-                    src.consume();
-                    auto newNode = new astNode(*cur);
-                    cur -> type = astNodeType::STRUCT_BUILD;
-                    cur -> children.push_back(newNode);
-                    cur -> value = "";
-                    newNode = new astNode;
-                    newNode -> type = astNodeType::FIELDS;
-                    cur -> children.push_back(newNode);
-                    // {ID: Expr, ...}
-                    bool flag = true;
-                    while (src.peek() != (token){tokenType::OPERATOR,"}"})
+                    if (src.peek() == (token){tokenType::OPERATOR, "("})
                     {
-                        if (!flag)
-                            throw compileError();
-                        flag=false;
-                        auto newField = new astNode;
-                        newField -> type = astNodeType::FIELD;
-                        newNode -> children.push_back(newField);
-                        newField -> value = src.expect(tokenType::IDENTIFIER).value;
-
-                        src.expect({tokenType::OPERATOR, ":"});
-                        auto newExpr = new astNode;
-                        newField -> children.push_back(newExpr);
-                        appendSimpleExpression(newExpr);
-
-                        if (src.peek() == (token){tokenType::OPERATOR, ","})
-                            flag=true, src.consume();
+                        src.consume();
+                        auto newNode = new astNode(*cur);
+                        cur -> type = astNodeType::FUNCTION_CALL;
+                        cur -> children.clear();
+                        cur -> children.push_back(newNode);
+                        cur -> value = "";
+                        newNode = new astNode;
+                        cur -> children.push_back(newNode);
+                        appendGroupExpression(newNode);
+                        src.expect({tokenType::OPERATOR, ")"});
                     }
-                    src.expect({tokenType::OPERATOR, "}"});
+                    else if (src.peek() == (token){tokenType::OPERATOR, "["})
+                    {
+                        src.consume();
+                        auto newNode = new astNode(*cur);
+                        cur -> type = astNodeType::ARRAY_INDEX;
+                        cur -> children.clear();
+                        cur -> children.push_back(newNode);
+                        cur -> value = "";
+                        newNode = new astNode;
+                        cur -> children.push_back(newNode);
+                        appendSimpleExpression(newNode);
+                        src.expect({tokenType::OPERATOR, "]"});
+                    }
+                    else if (src.peek() == (token){tokenType::OPERATOR, "{"})
+                    {
+                        src.consume();
+                        auto newNode = new astNode(*cur);
+                        cur -> type = astNodeType::STRUCT_BUILD;
+                        cur -> children.clear();
+                        cur -> children.push_back(newNode);
+                        cur -> value = "";
+                        newNode = new astNode;
+                        newNode -> type = astNodeType::FIELDS;
+                        cur -> children.push_back(newNode);
+                        // {ID: Expr, ...}
+                        bool flag = true;
+                        while (src.peek() != (token){tokenType::OPERATOR,"}"})
+                        {
+                            if (!flag)
+                                throw compileError();
+                            flag=false;
+                            auto newField = new astNode;
+                            newField -> type = astNodeType::FIELD;
+                            newNode -> children.push_back(newField);
+                            newField -> value = src.expect(tokenType::IDENTIFIER).value;
+
+                            src.expect({tokenType::OPERATOR, ":"});
+                            auto newExpr = new astNode;
+                            newField -> children.push_back(newExpr);
+                            appendSimpleExpression(newExpr);
+
+                            if (src.peek() == (token){tokenType::OPERATOR, ","})
+                                flag=true, src.consume();
+                        }
+                        src.expect({tokenType::OPERATOR, "}"});
+                    }
+                    else
+                        break;
                 }
                 break;
             }

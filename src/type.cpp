@@ -893,24 +893,31 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                     node->isMutable = true;
                 T = *T.typePtr;
             }
-            if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
-                throw compileError();
-            auto T0 = T.field->getItem("-"+node->children[1]->value);
-            if (T0.type == ILLEGAL || father->type == astNodeType::FUNCTION_CALL)
+            if (T.name == TypeName::ARRAY && node->children[1]->value == "len") // .len
+                node->realType = {TypeName::FUNCTION, &USIZE, 0};
+            else
             {
-                T0 = T.field->getItem(node->children[1]->value);
-                if (T0.type.name != TypeName::METHOD)
+                if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
                     throw compileError();
+                auto T0 = T.field->getItem("-"+node->children[1]->value);
+                if (T0.type == ILLEGAL || father->type == astNodeType::FUNCTION_CALL)
+                {
+                    T0 = T.field->getItem(node->children[1]->value);
+                    if (T0.type.name != TypeName::METHOD)
+                        throw compileError();
+                }
+                if (T0.type.name == TypeName::METHOD)
+                {
+                    if (T0.type.selfMutable && !node->children[0]->isMutable && node->children[0]->isVariable)
+                        throw compileError();
+                    T0.type.name = TypeName::FUNCTION;
+                    T0.type.SelfPtr = nullptr;
+                }
+                node->realType = T0.type;
+                node->isMutable &= T0.isMutable;
             }
-            if (T0.type.name == TypeName::METHOD)
-            {
-                if (T0.type.selfMutable && !node->children[0]->isMutable && node->children[0]->isVariable)
-                    throw compileError();
-                T0.type.name = TypeName::FUNCTION;
-                T0.type.SelfPtr = nullptr;
-            }
-            node->realType = T0.type;
-            node->isMutable &= T0.isMutable;
+            if (node->realType.name == TypeName::FUNCTION)
+                node->isMutable = false;
         }
         else if (node->value == "::")
         {
@@ -959,6 +966,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "!")
         {
+            std::cerr<<T<<std::endl;
             if (!isNumberB(T))
                 throw compileError();
             node->realType = T;

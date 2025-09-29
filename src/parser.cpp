@@ -729,11 +729,11 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
         {
             src.consume();
             auto newNode = new astNode;
-            newNode -> type = astNodeType::FUNCTION_CALL;
-            newNode -> children.push_back(node);
+            newNode->type = astNodeType::FUNCTION_CALL;
+            newNode->children.push_back(node);
             node = newNode;
             newNode = new astNode;
-            node -> children.push_back(newNode);
+            node->children.push_back(newNode);
             appendGroupExpression(newNode);
             src.expect({tokenType::OPERATOR, ")"});
             continue;

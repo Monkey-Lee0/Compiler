@@ -18,8 +18,8 @@ class parser
     void appendSimpleExpression(astNode*,bool firstFlag=false);
     astNode* parseExp(int,bool);
     void appendGroupExpression(astNode*);
-    void appendParameters(astNode*);
-    void appendTypedIdentifier(astNode*);
+    void appendParameters(astNode*, bool);
+    void appendTypedIdentifier(astNode*, bool);
     void appendType(astNode*);
     void appendItem(astNode*);
     void appendAssociatedItem(astNode*);

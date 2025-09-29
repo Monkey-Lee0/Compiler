@@ -27,7 +27,7 @@ void parser::appendStruct(astNode *node)
         newNode->type = astNodeType::PARAMETERS;
         node->children.push_back(newNode);
         src.expect({tokenType::OPERATOR,"{"});
-        appendParameters(newNode);
+        appendParameters(newNode, false);
         src.expect({tokenType::OPERATOR,"}"});
     }
     else
@@ -69,7 +69,7 @@ void parser::appendFunction(astNode *node)
     //parameters
     src.expect({tokenType::OPERATOR,"("});
     auto* newNode=new astNode;
-    appendParameters(newNode);
+    appendParameters(newNode, true);
     node->children.push_back(newNode);
     src.expect({tokenType::OPERATOR,")"});
 
@@ -138,82 +138,60 @@ void parser::appendType(astNode *node)
         throw compileError();
 }
 
-void parser::appendParameters(astNode *node)
+void parser::appendParameters(astNode *node, bool self)
 {
     node->type=astNodeType::PARAMETERS;
 
-    auto tk=src.peek();
     bool flag=true;
-    if (tk == (token){tokenType::OPERATOR, "&"} ||
-        tk == (token){tokenType::KEYWORD, "mut"} ||
-        tk == (token){tokenType::KEYWORD, "self"})
-    {
-        flag = false;
-        auto newNode = new astNode;
-        newNode -> type = astNodeType::SELF;
-        node -> children.push_back(newNode);
-
-        if (tk == (token){tokenType::OPERATOR, "&"})
-        {
-            src.consume();
-            tk=src.peek();
-            auto newQuant = new astNode;
-            newQuant->type = astNodeType::QUANTIFIER;
-            newQuant->value = "&";
-            newNode->children.push_back(newQuant);
-        }
-
-        if (tk == (token){tokenType::KEYWORD, "mut"})
-        {
-            src.consume();
-            tk=src.peek();
-            auto newQuant = new astNode;
-            newQuant->type = astNodeType::QUANTIFIER;
-            newQuant->value = "mut";
-            newNode->children.push_back(newQuant);
-        }
-        src.expect({tokenType::KEYWORD, "self"});
-        auto newType = new astNode;
-        newType -> type = astNodeType::TYPE;
-        newNode->children.push_back(newType);
-
-        if (node->children.empty())
-        {
-            if (src.peek() == (token){tokenType::OPERATOR, ":"})
-            {
-                src.consume();
-                appendType(newType);
-            }
-            else
-                newType -> value = "Self";
-
-        }
-        else
-            newType -> value = "Self";
-
-        tk=src.peek();
-        if (tk.type == tokenType::OPERATOR && tk.value == ",")
-            src.consume(),tk=src.peek(),flag = true;
-    }
-
-    while (tk.type == tokenType::IDENTIFIER)
+    bool first=true;
+    while (src.peek() != (token){tokenType::OPERATOR, ")"} &&
+        src.peek() != (token){tokenType::OPERATOR, "}"})
     {
         if (!flag)
             throw compileError();
         flag=false;
         auto newNode=new astNode;
-        appendTypedIdentifier(newNode);
+        appendTypedIdentifier(newNode, self&first);
+        first=false;
         node->children.push_back(newNode);
 
-        tk=src.peek();
-        if (tk.type == tokenType::OPERATOR && tk.value == ",")
-            src.consume(),tk=src.peek(),flag=true;
+        if (src.peek() == (token){tokenType::OPERATOR, ","})
+            src.consume(), flag=true;
     }
 }
 
-void parser::appendTypedIdentifier(astNode *node)
+void parser::appendTypedIdentifier(astNode *node, bool self)
 {
     node->type=astNodeType::TYPED_IDENTIFIER;
+
+    if (src.peek() == (token){tokenType::OPERATOR, "&"})
+    {
+        src.consume();
+        auto newQuant = new astNode;
+        newQuant->type = astNodeType::QUANTIFIER;
+        newQuant->value = "&";
+        node->children.push_back(newQuant);
+    }
+
+    if (src.peek() == (token){tokenType::KEYWORD, "mut"})
+    {
+        src.consume();
+        auto newQuant = new astNode;
+        newQuant->type = astNodeType::QUANTIFIER;
+        newQuant->value = "mut";
+        node->children.push_back(newQuant);
+    }
+
+    if (src.peek() == (token){tokenType::KEYWORD, "self"})
+    {
+        if (!self)
+            throw compileError();
+        src.consume();
+        if (!node->children.empty() && src.peek() == (token){tokenType::OPERATOR, ":"})
+            throw compileError();
+        node->type = astNodeType::SELF;
+        return ;
+    }
 
     node->value = src.expect(tokenType::IDENTIFIER).value;
     src.expect({tokenType::OPERATOR, ":"});

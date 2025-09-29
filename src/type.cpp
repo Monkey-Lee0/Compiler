@@ -240,19 +240,17 @@ void deriveAllType(Type& A, Type& B)
 bool isItem(const astNode* node)
 {
     return node->type == astNodeType::CONST_STATEMENT || node->type == astNodeType::FUNCTION ||
-        node->type == astNodeType::STRUCT;
+        node->type == astNodeType::STRUCT || node->type == astNodeType::ENUM;
 }
 
 void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
 {
     auto getString=[](astNode* node)->std::string
     {
-        if (node->type == astNodeType::STRUCT)
+        if (node->type == astNodeType::STRUCT || node->type == astNodeType::ENUM || node->type == astNodeType::TYPE)
             return "T-"+node->value;
         if (node->type == astNodeType::IMPL)
             return "impl-"+node->value;
-        if (node->type == astNodeType::TYPE)
-            return "T-"+node->value;
         return node->value;
     };
     for (auto child:node->children)
@@ -353,11 +351,23 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             for (int i=0; i<child->children[0]->children.size(); i++)
             {
                 auto id = child->children[0]->children[i];
+                bool has1 = false, has2 = false;
+                for (auto t:id->children)
+                    if (t->value == "&" && t->type == astNodeType::QUANTIFIER)
+                        has1 = true;
+                    else if (t->value == "mut" && t->type == astNodeType::QUANTIFIER)
+                        has2 = true;
                 if (id->type != astNodeType::SELF)
                 {
-                    auto T0=typeToItem(id->children[0]->realType);
-                    child->scope.first->setItem(id->value, {T0, std::any(),
-                        false, false});
+                    auto T0=typeToItem(id->children.back()->realType);
+                    if (has1)
+                        throw compileError();
+                    if (!has2)
+                        child->scope.first->setItem(id->value, {T0, std::any(),
+                         false, false});
+                    else
+                        child->scope.first->setItem(id->value, {T0, std::any(),
+                         true, false});
                     T.members.push_back(new Type(T0));
                 }
                 else if (i || SelfType == ILLEGAL)
@@ -365,19 +375,18 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                 else
                 {
                     auto &T1= SelfType;
-                    bool has1 = false, has2 = false;
-                    for (auto t:id->children)
-                        if (t->value == "&")
-                            has1 = true;
-                        else if (t->value == "mut")
-                            has2 = true, T.selfMutable = true;
+                    if (has2)
+                        T.selfMutable = true;
                     if (!has1 && !has2)
                     {
-                        auto T0 = typeToItem(id->children[0]->realType);
+                        if (!id->children.empty())
+                        {
+                            auto T0 = typeToItem(id->children.back()->realType);
+                            if (T0 != T1)
+                                throw compileError();
+                        }
                         child->scope.first->setItem("self", {T1,
                             std::any(), false, false});
-                        if (T0 != T1)
-                            throw compileError();
                     }
                     else if (has1 && !has2)
                         child->scope.first->setItem("self", {castRef(T1),

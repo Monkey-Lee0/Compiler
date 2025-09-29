@@ -251,6 +251,8 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             return "T-"+node->value;
         if (node->type == astNodeType::IMPL)
             return "impl-"+node->value;
+        if (node->type == astNodeType::TYPE)
+            return "T-"+node->value;
         return node->value;
     };
     for (auto child:node->children)

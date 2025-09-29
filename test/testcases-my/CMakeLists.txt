@@ -10,16 +10,16 @@ FetchContent_MakeAvailable(googletest)
 
 # 3.2 编译测试可执行文件
 add_executable(my_test test.cpp
-        ../src/lexer.cpp
-        ../src/token.cpp
-        ../src/ast.h
-        ../src/lexer.h
-        ../src/token.h
-        ../src/parser.cpp
-        ../src/parser.h
-        ../src/ast.cpp
-        ../src/type.cpp
-        ../src/type.h)
+        ../../src/lexer.cpp
+        ../../src/token.cpp
+        ../../src/ast.h
+        ../../src/lexer.h
+        ../../src/token.h
+        ../../src/parser.cpp
+        ../../src/parser.h
+        ../../src/ast.cpp
+        ../../src/type.cpp
+        ../../src/type.h)
 
 # 3.3 链接被测库 + gtest
 target_link_libraries(my_test

@@ -1,11 +1,11 @@
-#include "../src/parser.h"
-#include "../src/type.h"
+#include "../../src/parser.h"
+#include "../../src/type.h"
 #include<iostream>
 #include <gtest/gtest.h>
 
 std::string openFile(std::string path)
 {
-    path="../../test/testcases/"+path;
+    path="../../../test/testcases-my/testcases/"+path;
     freopen(path.c_str(),"r",stdin);
     int in;
     std::string code;

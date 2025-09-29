@@ -604,6 +604,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     }
     else if (node->type == astNodeType::WHILE)
     {
+        if (node->children[0]->realType != BOOL)
+            throw compileError();
         node->realType = UNIT;
     }
     else if (node->type == astNodeType::LOOP)

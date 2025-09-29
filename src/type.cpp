@@ -908,7 +908,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                 }
                 if (T0.type.name == TypeName::METHOD)
                 {
-                    if (T0.type.selfMutable && !node->children[0]->isMutable && node->children[0]->isVariable)
+                    if (T0.type.selfMutable && !node->isMutable && node->isVariable)
                         throw compileError();
                     T0.type.name = TypeName::FUNCTION;
                     T0.type.SelfPtr = nullptr;
@@ -966,7 +966,6 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
         else if (node->value == "!")
         {
-            std::cerr<<T<<std::endl;
             if (!isNumberB(T))
                 throw compileError();
             node->realType = T;
@@ -1130,6 +1129,9 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         {
             auto res = std::stoll(info);
             node->eval = res;
+            if (father->type == astNodeType::UNARY_OPERATOR && father->value == "-")
+                res=-res;
+            std::cerr<<res<<std::endl;
             if (res > UINT_MAX || res < INT_MIN)
                 throw compileError();
             if (res >= 0 && res <= INT_MAX)

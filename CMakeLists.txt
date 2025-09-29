@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 add_subdirectory(test/testcases-my)
-add_subdirectory(test/wxzheng/RCompiler-Testcases/RCompiler-Testcases)
+add_subdirectory(test/wxzheng)
 
 add_executable(Compiler
     src/main.cpp

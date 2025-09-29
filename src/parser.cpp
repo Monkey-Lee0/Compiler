@@ -187,12 +187,13 @@ void parser::appendParameters(astNode *node)
             else
                 newType -> value = "Self";
 
-            tk=src.peek();
-            if (tk.type == tokenType::OPERATOR && tk.value == ",")
-                src.consume(),tk=src.peek(),flag = true;
         }
         else
             newType -> value = "Self";
+
+        tk=src.peek();
+        if (tk.type == tokenType::OPERATOR && tk.value == ",")
+            src.consume(),tk=src.peek(),flag = true;
     }
 
     while (tk.type == tokenType::IDENTIFIER)

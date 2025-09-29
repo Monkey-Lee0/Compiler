@@ -370,7 +370,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                         if (t->value == "&")
                             has1 = true;
                         else if (t->value == "mut")
-                            has2 = true;
+                            has2 = true, T.selfMutable = true;
                     if (!has1 && !has2)
                     {
                         auto T0 = typeToItem(id->children[0]->realType);
@@ -895,6 +895,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             }
             if (T0.type.name == TypeName::METHOD)
             {
+                if (T0.type.selfMutable && !node->children[0]->isMutable && node->children[0]->isVariable)
+                    throw compileError();
                 T0.type.name = TypeName::FUNCTION;
                 T0.type.SelfPtr = nullptr;
             }

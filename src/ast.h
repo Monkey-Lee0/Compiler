@@ -23,6 +23,7 @@ public:
     TypeName name;
     Type* typePtr;
     Type* SelfPtr;
+    bool selfMutable = false;
     unsigned int len, structID = 0;
     std::string structName;
     std::vector<Type const*> members;

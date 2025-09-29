@@ -20,15 +20,16 @@ inline auto UNIT = Type(TypeName::UNIT);
 inline auto VERSATILE = Type(TypeName::VERSATILE);
 inline auto NEVER = Type(TypeName::NEVER);
 
-inline auto I32_T = Type(TypeName::TYPE, &I32, -1);
-inline auto U32_T = Type(TypeName::TYPE, &U32, -1);
-inline auto ISIZE_T = Type(TypeName::TYPE, &ISIZE, -1);
-inline auto USIZE_T = Type(TypeName::TYPE, &USIZE, -1);
-inline auto CHAR_T = Type(TypeName::TYPE, &CHAR, -1);
-inline auto STR_T = Type(TypeName::TYPE, &STR, -1);
-inline auto STRING_T = Type(TypeName::TYPE, &STRING, -1);
-inline auto BOOL_T = Type(TypeName::TYPE, &BOOL, -1);
-inline auto VERSATILE_T = Type(TypeName::TYPE, &VERSATILE, -1);
+inline auto I32_T = Type(TypeName::TYPE, &I32, 0);
+inline auto U32_T = Type(TypeName::TYPE, &U32, 0);
+inline auto ISIZE_T = Type(TypeName::TYPE, &ISIZE, 0);
+inline auto USIZE_T = Type(TypeName::TYPE, &USIZE, 0);
+inline auto CHAR_T = Type(TypeName::TYPE, &CHAR, 0);
+inline auto STR_T = Type(TypeName::TYPE, &STR, 0);
+inline auto STRING_T = Type(TypeName::TYPE, &STRING, 0);
+inline auto REF_STR = Type(TypeName::REF, &STR, 0);
+inline auto BOOL_T = Type(TypeName::TYPE, &BOOL, 0);
+inline auto VERSATILE_T = Type(TypeName::TYPE, &VERSATILE, 0);
 
 struct Unit{};
 

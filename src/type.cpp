@@ -466,6 +466,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
 
 void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr)
 {
+    node->father = father;
     if (node->realType != ILLEGAL || node->type == astNodeType::ENUM)
         return ;
     if (node->type == astNodeType::STATEMENT_BLOCK)
@@ -900,6 +901,9 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             }
             if (T.name == TypeName::ARRAY && node->children[1]->value == "len") // .len
                 node->realType = {TypeName::FUNCTION, &USIZE, 0};
+            else if ((T == U32 || T == USIZE || T == UINT || T == INT) &&
+                node->children[1]->value == "to_string")
+                node->realType = {TypeName::FUNCTION, &STRING, 0};
             else
             {
                 if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
@@ -1031,6 +1035,22 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         node->isVariable = true;
         node->eval = R.eval;
         node->realType = R.type;
+        if (R.type.isExit && father->type == astNodeType::FUNCTION_CALL && father->curSonId == 0)
+        {
+            auto cur = father->father;
+            if (cur == nullptr || (cur->type != astNodeType::EXPRESSION_STATEMENT &&
+                cur->type != astNodeType::RETURN_CUR))
+                throw compileError();
+            cur = cur->father;
+            if (cur == nullptr || cur->type != astNodeType::STATEMENT_BLOCK || cur->curSonId != cur->children.size()-1)
+                throw compileError();
+            cur = cur->father;
+            if (cur == nullptr || cur->type != astNodeType::FUNCTION || cur->value != "main")
+                throw compileError();
+            cur = cur->father;
+            if (cur == nullptr || cur->type != astNodeType::PROGRAM)
+                throw compileError();
+        }
     }
     else if (node->type == astNodeType::TYPE)
     {
@@ -1147,7 +1167,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         }
     }
     else if (node->type == astNodeType::STRING_LITERAL)
-        node->realType = STRING;
+        node->realType = REF_STR;
     else if (node->type == astNodeType::EXPRESSION_STATEMENT)
     {
         if (node->children.empty())
@@ -1286,14 +1306,22 @@ void loadBuiltin(astNode* node)
     node->scope = std::make_pair(new Scope(), nullptr);
     auto T = (Type){TypeName::FUNCTION, &UNIT, 0};
     T.members.push_back(&I32);
-
+    T.isExit = true;
     node->scope.first->setItem("exit", {T, std::any(), false, true});
+    T.isExit = false;
     node->scope.first->setItem("printInt", {T, std::any(), false, true});
     node->scope.first->setItem("printlnInt", {T, std::any(), false, true});
+
+    T.members.back() = &REF_STR;
+    node->scope.first->setItem("print", {T, std::any(), false, true});
+    node->scope.first->setItem("println", {T, std::any(), false, true});
 
     T.typePtr = &I32;
     T.members.clear();
     node->scope.first->setItem("getInt", {T, std::any(), false, true});
+
+    T.typePtr = &STRING;
+    node->scope.first->setItem("getString", {T, std::any(), false, true});
 }
 
 void semanticCheckType(astNode* node)

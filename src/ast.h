@@ -23,6 +23,7 @@ public:
     TypeName name;
     Type* typePtr;
     Type* SelfPtr;
+    bool isExit = false;
     bool selfMutable = false;
     unsigned int len, structID = 0;
     std::string structName;
@@ -74,6 +75,7 @@ public:
     std::vector<astNode*> children;
     std::string value;
     astNodeType type;
+    astNode* father;
     Type realType;
     std::any eval;
     std::pair<Scope*, astNode*> scope;

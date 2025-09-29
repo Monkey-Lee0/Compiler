@@ -1,11 +1,11 @@
-#include "../../../../src/parser.h"
-#include "../../../../src/type.h"
+#include "../../src/parser.h"
+#include "../../src/type.h"
 #include<iostream>
 #include <gtest/gtest.h>
 
 std::string openFile(std::string path)
 {
-    path="../../../test/wxzheng/"+path;
+    path="../../../test/wxzheng/testcases/"+path;
     freopen(path.c_str(),"r",stdin);
     int in;
     std::string code;
@@ -22,275 +22,822 @@ void runSemantic(std::string path)
     const auto code=openFile(path);
     semanticCheckType(parser(code).solve());
 }
-TEST(Semantic, comprehensive1) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive1.in"));}
-TEST(Semantic, comprehensive10) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive10.in"));}
-TEST(Semantic, comprehensive11) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive11.in"));}
-TEST(Semantic, comprehensive12) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive12.in"));}
-TEST(Semantic, comprehensive13) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive13.in"));}
-TEST(Semantic, comprehensive14) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive14.in"));}
-TEST(Semantic, comprehensive15) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive15.in"));}
-TEST(Semantic, comprehensive16) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive16.in"));}
-TEST(Semantic, comprehensive17) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive17.in"));}
-TEST(Semantic, comprehensive18) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive18.in"));}
-TEST(Semantic, comprehensive19) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive19.in"));}
-TEST(Semantic, comprehensive2) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive2.in"));}
-TEST(Semantic, comprehensive20) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive20.in"));}
-TEST(Semantic, comprehensive21) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive21.in"));}
-TEST(Semantic, comprehensive22) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive22.in"));}
-TEST(Semantic, comprehensive23) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive23.in"));}
-TEST(Semantic, comprehensive24) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive24.in"));}
-TEST(Semantic, comprehensive25) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive25.in"));}
-TEST(Semantic, comprehensive26) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive26.in"));}
-TEST(Semantic, comprehensive27) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive27.in"));}
-TEST(Semantic, comprehensive28) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive28.in"));}
-TEST(Semantic, comprehensive29) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive29.in"));}
-TEST(Semantic, comprehensive3) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive3.in"));}
-TEST(Semantic, comprehensive30) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive30.in"));}
-TEST(Semantic, comprehensive31) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive31.in"));}
-TEST(Semantic, comprehensive32) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive32.in"));}
-TEST(Semantic, comprehensive33) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive33.in"));}
-TEST(Semantic, comprehensive34) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive34.in"));}
-TEST(Semantic, comprehensive35) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive35.in"));}
-TEST(Semantic, comprehensive36) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive36.in"));}
-TEST(Semantic, comprehensive37) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive37.in"));}
-TEST(Semantic, comprehensive38) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive38.in"));}
-TEST(Semantic, comprehensive39) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive39.in"));}
-TEST(Semantic, comprehensive4) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive4.in"));}
-TEST(Semantic, comprehensive40) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive40.in"));}
-TEST(Semantic, comprehensive41) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive41.in"));}
-TEST(Semantic, comprehensive42) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive42.in"));}
-TEST(Semantic, comprehensive43) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive43.in"));}
-TEST(Semantic, comprehensive44) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive44.in"));}
-TEST(Semantic, comprehensive45) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive45.in"));}
-TEST(Semantic, comprehensive46) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive46.in"));}
-TEST(Semantic, comprehensive47) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive47.in"));}
-TEST(Semantic, comprehensive48) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive48.in"));}
-TEST(Semantic, comprehensive49) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive49.in"));}
-TEST(Semantic, comprehensive5) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive5.in"));}
-TEST(Semantic, comprehensive50) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive50.in"));}
-TEST(Semantic, comprehensive6) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive6.in"));}
-TEST(Semantic, comprehensive7) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive7.in"));}
-TEST(Semantic, comprehensive8) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive8.in"));}
-TEST(Semantic, comprehensive9) {EXPECT_NO_THROW(runSemantic("testcases/comprehensive9.in"));}
-TEST(Semantic, array1) {EXPECT_NO_THROW(runSemantic("testcases/array1.in"));}
-TEST(Semantic, array2) {EXPECT_NO_THROW(runSemantic("testcases/array2.in"));}
-TEST(Semantic, array3) {EXPECT_NO_THROW(runSemantic("testcases/array3.in"));}
-TEST(Semantic, array4) {EXPECT_ANY_THROW(runSemantic("testcases/array4.in"));}
-TEST(Semantic, array5) {EXPECT_ANY_THROW(runSemantic("testcases/array5.in"));}
-TEST(Semantic, array6) {EXPECT_ANY_THROW(runSemantic("testcases/array6.in"));}
-TEST(Semantic, array7) {EXPECT_ANY_THROW(runSemantic("testcases/array7.in"));}
-TEST(Semantic, array8) {EXPECT_ANY_THROW(runSemantic("testcases/array8.in"));}
-TEST(Semantic, autoref1) {EXPECT_NO_THROW(runSemantic("testcases/autoref1.in"));}
-TEST(Semantic, autoref2) {EXPECT_NO_THROW(runSemantic("testcases/autoref2.in"));}
-TEST(Semantic, autoref3) {EXPECT_NO_THROW(runSemantic("testcases/autoref3.in"));}
-TEST(Semantic, autoref4) {EXPECT_NO_THROW(runSemantic("testcases/autoref4.in"));}
-TEST(Semantic, autoref5) {EXPECT_NO_THROW(runSemantic("testcases/autoref5.in"));}
-TEST(Semantic, autoref6) {EXPECT_NO_THROW(runSemantic("testcases/autoref6.in"));}
-TEST(Semantic, autoref7) {EXPECT_ANY_THROW(runSemantic("testcases/autoref7.in"));}
-TEST(Semantic, autoref8) {EXPECT_ANY_THROW(runSemantic("testcases/autoref8.in"));}
-TEST(Semantic, autoref9) {EXPECT_NO_THROW(runSemantic("testcases/autoref9.in"));}
-TEST(Semantic, basic1) {EXPECT_NO_THROW(runSemantic("testcases/basic1.in"));}
-TEST(Semantic, basic10) {EXPECT_ANY_THROW(runSemantic("testcases/basic10.in"));}
-TEST(Semantic, basic11) {EXPECT_NO_THROW(runSemantic("testcases/basic11.in"));}
-TEST(Semantic, basic12) {EXPECT_ANY_THROW(runSemantic("testcases/basic12.in"));}
-TEST(Semantic, basic13) {EXPECT_ANY_THROW(runSemantic("testcases/basic13.in"));}
-TEST(Semantic, basic14) {EXPECT_ANY_THROW(runSemantic("testcases/basic14.in"));}
-TEST(Semantic, basic15) {EXPECT_ANY_THROW(runSemantic("testcases/basic15.in"));}
-TEST(Semantic, basic16) {EXPECT_ANY_THROW(runSemantic("testcases/basic16.in"));}
-TEST(Semantic, basic17) {EXPECT_NO_THROW(runSemantic("testcases/basic17.in"));}
-TEST(Semantic, basic18) {EXPECT_NO_THROW(runSemantic("testcases/basic18.in"));}
-TEST(Semantic, basic19) {EXPECT_NO_THROW(runSemantic("testcases/basic19.in"));}
-TEST(Semantic, basic2) {EXPECT_ANY_THROW(runSemantic("testcases/basic2.in"));}
-TEST(Semantic, basic20) {EXPECT_NO_THROW(runSemantic("testcases/basic20.in"));}
-TEST(Semantic, basic21) {EXPECT_NO_THROW(runSemantic("testcases/basic21.in"));}
-TEST(Semantic, basic22) {EXPECT_NO_THROW(runSemantic("testcases/basic22.in"));}
-TEST(Semantic, basic23) {EXPECT_NO_THROW(runSemantic("testcases/basic23.in"));}
-TEST(Semantic, basic24) {EXPECT_NO_THROW(runSemantic("testcases/basic24.in"));}
-TEST(Semantic, basic25) {EXPECT_NO_THROW(runSemantic("testcases/basic25.in"));}
-TEST(Semantic, basic26) {EXPECT_NO_THROW(runSemantic("testcases/basic26.in"));}
-TEST(Semantic, basic27) {EXPECT_NO_THROW(runSemantic("testcases/basic27.in"));}
-TEST(Semantic, basic28) {EXPECT_ANY_THROW(runSemantic("testcases/basic28.in"));}
-TEST(Semantic, basic29) {EXPECT_NO_THROW(runSemantic("testcases/basic29.in"));}
-TEST(Semantic, basic3) {EXPECT_ANY_THROW(runSemantic("testcases/basic3.in"));}
-TEST(Semantic, basic30) {EXPECT_ANY_THROW(runSemantic("testcases/basic30.in"));}
-TEST(Semantic, basic31) {EXPECT_ANY_THROW(runSemantic("testcases/basic31.in"));}
-TEST(Semantic, basic32) {EXPECT_ANY_THROW(runSemantic("testcases/basic32.in"));}
-TEST(Semantic, basic33) {EXPECT_ANY_THROW(runSemantic("testcases/basic33.in"));}
-TEST(Semantic, basic34) {EXPECT_ANY_THROW(runSemantic("testcases/basic34.in"));}
-TEST(Semantic, basic35) {EXPECT_ANY_THROW(runSemantic("testcases/basic35.in"));}
-TEST(Semantic, basic36) {EXPECT_NO_THROW(runSemantic("testcases/basic36.in"));}
-TEST(Semantic, basic37) {EXPECT_NO_THROW(runSemantic("testcases/basic37.in"));}
-TEST(Semantic, basic38) {EXPECT_ANY_THROW(runSemantic("testcases/basic38.in"));}
-TEST(Semantic, basic39) {EXPECT_NO_THROW(runSemantic("testcases/basic39.in"));}
-TEST(Semantic, basic4) {EXPECT_NO_THROW(runSemantic("testcases/basic4.in"));}
-TEST(Semantic, basic40) {EXPECT_NO_THROW(runSemantic("testcases/basic40.in"));}
-TEST(Semantic, basic5) {EXPECT_ANY_THROW(runSemantic("testcases/basic5.in"));}
-TEST(Semantic, basic6) {EXPECT_ANY_THROW(runSemantic("testcases/basic6.in"));}
-TEST(Semantic, basic7) {EXPECT_ANY_THROW(runSemantic("testcases/basic7.in"));}
-TEST(Semantic, basic8) {EXPECT_ANY_THROW(runSemantic("testcases/basic8.in"));}
-TEST(Semantic, basic9) {EXPECT_ANY_THROW(runSemantic("testcases/basic9.in"));}
-TEST(Semantic, expr1) {EXPECT_ANY_THROW(runSemantic("testcases/expr1.in"));}
-TEST(Semantic, expr10) {EXPECT_ANY_THROW(runSemantic("testcases/expr10.in"));}
-TEST(Semantic, expr11) {EXPECT_ANY_THROW(runSemantic("testcases/expr11.in"));}
-TEST(Semantic, expr12) {EXPECT_ANY_THROW(runSemantic("testcases/expr12.in"));}
-TEST(Semantic, expr13) {EXPECT_NO_THROW(runSemantic("testcases/expr13.in"));}
-TEST(Semantic, expr14) {EXPECT_ANY_THROW(runSemantic("testcases/expr14.in"));}
-TEST(Semantic, expr15) {EXPECT_ANY_THROW(runSemantic("testcases/expr15.in"));}
-TEST(Semantic, expr16) {EXPECT_ANY_THROW(runSemantic("testcases/expr16.in"));}
-TEST(Semantic, expr17) {EXPECT_NO_THROW(runSemantic("testcases/expr17.in"));}
-TEST(Semantic, expr18) {EXPECT_ANY_THROW(runSemantic("testcases/expr18.in"));}
-TEST(Semantic, expr19) {EXPECT_NO_THROW(runSemantic("testcases/expr19.in"));}
-TEST(Semantic, expr2) {EXPECT_ANY_THROW(runSemantic("testcases/expr2.in"));}
-TEST(Semantic, expr20) {EXPECT_ANY_THROW(runSemantic("testcases/expr20.in"));}
-TEST(Semantic, expr21) {EXPECT_ANY_THROW(runSemantic("testcases/expr21.in"));}
-TEST(Semantic, expr22) {EXPECT_ANY_THROW(runSemantic("testcases/expr22.in"));}
-TEST(Semantic, expr23) {EXPECT_ANY_THROW(runSemantic("testcases/expr23.in"));}
-TEST(Semantic, expr24) {EXPECT_ANY_THROW(runSemantic("testcases/expr24.in"));}
-TEST(Semantic, expr25) {EXPECT_ANY_THROW(runSemantic("testcases/expr25.in"));}
-TEST(Semantic, expr26) {EXPECT_ANY_THROW(runSemantic("testcases/expr26.in"));}
-TEST(Semantic, expr27) {EXPECT_ANY_THROW(runSemantic("testcases/expr27.in"));}
-TEST(Semantic, expr28) {EXPECT_ANY_THROW(runSemantic("testcases/expr28.in"));}
-TEST(Semantic, expr29) {EXPECT_ANY_THROW(runSemantic("testcases/expr29.in"));}
-TEST(Semantic, expr3) {EXPECT_ANY_THROW(runSemantic("testcases/expr3.in"));}
-TEST(Semantic, expr30) {EXPECT_ANY_THROW(runSemantic("testcases/expr30.in"));}
-TEST(Semantic, expr31) {EXPECT_ANY_THROW(runSemantic("testcases/expr31.in"));}
-TEST(Semantic, expr32) {EXPECT_ANY_THROW(runSemantic("testcases/expr32.in"));}
-TEST(Semantic, expr33) {EXPECT_NO_THROW(runSemantic("testcases/expr33.in"));}
-TEST(Semantic, expr34) {EXPECT_NO_THROW(runSemantic("testcases/expr34.in"));}
-TEST(Semantic, expr35) {EXPECT_ANY_THROW(runSemantic("testcases/expr35.in"));}
-TEST(Semantic, expr36) {EXPECT_NO_THROW(runSemantic("testcases/expr36.in"));}
-TEST(Semantic, expr37) {EXPECT_ANY_THROW(runSemantic("testcases/expr37.in"));}
-TEST(Semantic, expr38) {EXPECT_NO_THROW(runSemantic("testcases/expr38.in"));}
-TEST(Semantic, expr39) {EXPECT_ANY_THROW(runSemantic("testcases/expr39.in"));}
-TEST(Semantic, expr4) {EXPECT_ANY_THROW(runSemantic("testcases/expr4.in"));}
-TEST(Semantic, expr40) {EXPECT_ANY_THROW(runSemantic("testcases/expr40.in"));}
-TEST(Semantic, expr5) {EXPECT_ANY_THROW(runSemantic("testcases/expr5.in"));}
-TEST(Semantic, expr6) {EXPECT_ANY_THROW(runSemantic("testcases/expr6.in"));}
-TEST(Semantic, expr7) {EXPECT_ANY_THROW(runSemantic("testcases/expr7.in"));}
-TEST(Semantic, expr8) {EXPECT_ANY_THROW(runSemantic("testcases/expr8.in"));}
-TEST(Semantic, expr9) {EXPECT_ANY_THROW(runSemantic("testcases/expr9.in"));}
-TEST(Semantic, if1) {EXPECT_NO_THROW(runSemantic("testcases/if1.in"));}
-TEST(Semantic, if10) {EXPECT_NO_THROW(runSemantic("testcases/if10.in"));}
-TEST(Semantic, if11) {EXPECT_ANY_THROW(runSemantic("testcases/if11.in"));}
-TEST(Semantic, if12) {EXPECT_ANY_THROW(runSemantic("testcases/if12.in"));}
-TEST(Semantic, if13) {EXPECT_ANY_THROW(runSemantic("testcases/if13.in"));}
-TEST(Semantic, if14) {EXPECT_ANY_THROW(runSemantic("testcases/if14.in"));}
-TEST(Semantic, if15) {EXPECT_ANY_THROW(runSemantic("testcases/if15.in"));}
-TEST(Semantic, if2) {EXPECT_NO_THROW(runSemantic("testcases/if2.in"));}
-TEST(Semantic, if3) {EXPECT_NO_THROW(runSemantic("testcases/if3.in"));}
-TEST(Semantic, if4) {EXPECT_NO_THROW(runSemantic("testcases/if4.in"));}
-TEST(Semantic, if5) {EXPECT_NO_THROW(runSemantic("testcases/if5.in"));}
-TEST(Semantic, if6) {EXPECT_NO_THROW(runSemantic("testcases/if6.in"));}
-TEST(Semantic, if7) {EXPECT_NO_THROW(runSemantic("testcases/if7.in"));}
-TEST(Semantic, if8) {EXPECT_NO_THROW(runSemantic("testcases/if8.in"));}
-TEST(Semantic, if9) {EXPECT_NO_THROW(runSemantic("testcases/if9.in"));}
-TEST(Semantic, loop1) {EXPECT_NO_THROW(runSemantic("testcases/loop1.in"));}
-TEST(Semantic, loop10) {EXPECT_ANY_THROW(runSemantic("testcases/loop10.in"));}
-TEST(Semantic, loop2) {EXPECT_NO_THROW(runSemantic("testcases/loop2.in"));}
-TEST(Semantic, loop3) {EXPECT_NO_THROW(runSemantic("testcases/loop3.in"));}
-TEST(Semantic, loop4) {EXPECT_NO_THROW(runSemantic("testcases/loop4.in"));}
-TEST(Semantic, loop5) {EXPECT_NO_THROW(runSemantic("testcases/loop5.in"));}
-TEST(Semantic, loop6) {EXPECT_ANY_THROW(runSemantic("testcases/loop6.in"));}
-TEST(Semantic, loop7) {EXPECT_ANY_THROW(runSemantic("testcases/loop7.in"));}
-TEST(Semantic, loop8) {EXPECT_ANY_THROW(runSemantic("testcases/loop8.in"));}
-TEST(Semantic, loop9) {EXPECT_ANY_THROW(runSemantic("testcases/loop9.in"));}
-TEST(Semantic, misc1) {EXPECT_NO_THROW(runSemantic("testcases/misc1.in"));}
-TEST(Semantic, misc10) {EXPECT_NO_THROW(runSemantic("testcases/misc10.in"));}
-TEST(Semantic, misc11) {EXPECT_NO_THROW(runSemantic("testcases/misc11.in"));}
-TEST(Semantic, misc12) {EXPECT_NO_THROW(runSemantic("testcases/misc12.in"));}
-TEST(Semantic, misc13) {EXPECT_NO_THROW(runSemantic("testcases/misc13.in"));}
-TEST(Semantic, misc14) {EXPECT_NO_THROW(runSemantic("testcases/misc14.in"));}
-TEST(Semantic, misc15) {EXPECT_NO_THROW(runSemantic("testcases/misc15.in"));}
-TEST(Semantic, misc16) {EXPECT_NO_THROW(runSemantic("testcases/misc16.in"));}
-TEST(Semantic, misc17) {EXPECT_NO_THROW(runSemantic("testcases/misc17.in"));}
-TEST(Semantic, misc18) {EXPECT_NO_THROW(runSemantic("testcases/misc18.in"));}
-TEST(Semantic, misc19) {EXPECT_NO_THROW(runSemantic("testcases/misc19.in"));}
-TEST(Semantic, misc2) {EXPECT_NO_THROW(runSemantic("testcases/misc2.in"));}
-TEST(Semantic, misc20) {EXPECT_NO_THROW(runSemantic("testcases/misc20.in"));}
-TEST(Semantic, misc21) {EXPECT_NO_THROW(runSemantic("testcases/misc21.in"));}
-TEST(Semantic, misc22) {EXPECT_NO_THROW(runSemantic("testcases/misc22.in"));}
-TEST(Semantic, misc23) {EXPECT_NO_THROW(runSemantic("testcases/misc23.in"));}
-TEST(Semantic, misc24) {EXPECT_NO_THROW(runSemantic("testcases/misc24.in"));}
-TEST(Semantic, misc25) {EXPECT_NO_THROW(runSemantic("testcases/misc25.in"));}
-TEST(Semantic, misc26) {EXPECT_NO_THROW(runSemantic("testcases/misc26.in"));}
-TEST(Semantic, misc27) {EXPECT_NO_THROW(runSemantic("testcases/misc27.in"));}
-TEST(Semantic, misc28) {EXPECT_NO_THROW(runSemantic("testcases/misc28.in"));}
-TEST(Semantic, misc29) {EXPECT_NO_THROW(runSemantic("testcases/misc29.in"));}
-TEST(Semantic, misc3) {EXPECT_NO_THROW(runSemantic("testcases/misc3.in"));}
-TEST(Semantic, misc30) {EXPECT_NO_THROW(runSemantic("testcases/misc30.in"));}
-TEST(Semantic, misc31) {EXPECT_NO_THROW(runSemantic("testcases/misc31.in"));}
-TEST(Semantic, misc32) {EXPECT_NO_THROW(runSemantic("testcases/misc32.in"));}
-TEST(Semantic, misc33) {EXPECT_NO_THROW(runSemantic("testcases/misc33.in"));}
-TEST(Semantic, misc34) {EXPECT_NO_THROW(runSemantic("testcases/misc34.in"));}
-TEST(Semantic, misc35) {EXPECT_NO_THROW(runSemantic("testcases/misc35.in"));}
-TEST(Semantic, misc36) {EXPECT_NO_THROW(runSemantic("testcases/misc36.in"));}
-TEST(Semantic, misc37) {EXPECT_NO_THROW(runSemantic("testcases/misc37.in"));}
-TEST(Semantic, misc38) {EXPECT_NO_THROW(runSemantic("testcases/misc38.in"));}
-TEST(Semantic, misc39) {EXPECT_NO_THROW(runSemantic("testcases/misc39.in"));}
-TEST(Semantic, misc4) {EXPECT_NO_THROW(runSemantic("testcases/misc4.in"));}
-TEST(Semantic, misc40) {EXPECT_NO_THROW(runSemantic("testcases/misc40.in"));}
-TEST(Semantic, misc41) {EXPECT_NO_THROW(runSemantic("testcases/misc41.in"));}
-TEST(Semantic, misc42) {EXPECT_NO_THROW(runSemantic("testcases/misc42.in"));}
-TEST(Semantic, misc43) {EXPECT_NO_THROW(runSemantic("testcases/misc43.in"));}
-TEST(Semantic, misc44) {EXPECT_NO_THROW(runSemantic("testcases/misc44.in"));}
-TEST(Semantic, misc45) {EXPECT_NO_THROW(runSemantic("testcases/misc45.in"));}
-TEST(Semantic, misc46) {EXPECT_NO_THROW(runSemantic("testcases/misc46.in"));}
-TEST(Semantic, misc47) {EXPECT_NO_THROW(runSemantic("testcases/misc47.in"));}
-TEST(Semantic, misc48) {EXPECT_NO_THROW(runSemantic("testcases/misc48.in"));}
-TEST(Semantic, misc49) {EXPECT_NO_THROW(runSemantic("testcases/misc49.in"));}
-TEST(Semantic, misc5) {EXPECT_NO_THROW(runSemantic("testcases/misc5.in"));}
-TEST(Semantic, misc50) {EXPECT_NO_THROW(runSemantic("testcases/misc50.in"));}
-TEST(Semantic, misc51) {EXPECT_NO_THROW(runSemantic("testcases/misc51.in"));}
-TEST(Semantic, misc52) {EXPECT_NO_THROW(runSemantic("testcases/misc52.in"));}
-TEST(Semantic, misc53) {EXPECT_NO_THROW(runSemantic("testcases/misc53.in"));}
-TEST(Semantic, misc54) {EXPECT_NO_THROW(runSemantic("testcases/misc54.in"));}
-TEST(Semantic, misc55) {EXPECT_NO_THROW(runSemantic("testcases/misc55.in"));}
-TEST(Semantic, misc56) {EXPECT_ANY_THROW(runSemantic("testcases/misc56.in"));}
-TEST(Semantic, misc57) {EXPECT_ANY_THROW(runSemantic("testcases/misc57.in"));}
-TEST(Semantic, misc58) {EXPECT_ANY_THROW(runSemantic("testcases/misc58.in"));}
-TEST(Semantic, misc59) {EXPECT_ANY_THROW(runSemantic("testcases/misc59.in"));}
-TEST(Semantic, misc6) {EXPECT_NO_THROW(runSemantic("testcases/misc6.in"));}
-TEST(Semantic, misc60) {EXPECT_ANY_THROW(runSemantic("testcases/misc60.in"));}
-TEST(Semantic, misc61) {EXPECT_ANY_THROW(runSemantic("testcases/misc61.in"));}
-TEST(Semantic, misc62) {EXPECT_ANY_THROW(runSemantic("testcases/misc62.in"));}
-TEST(Semantic, misc63) {EXPECT_ANY_THROW(runSemantic("testcases/misc63.in"));}
-TEST(Semantic, misc64) {EXPECT_ANY_THROW(runSemantic("testcases/misc64.in"));}
-TEST(Semantic, misc65) {EXPECT_NO_THROW(runSemantic("testcases/misc65.in"));}
-TEST(Semantic, misc7) {EXPECT_NO_THROW(runSemantic("testcases/misc7.in"));}
-TEST(Semantic, misc8) {EXPECT_NO_THROW(runSemantic("testcases/misc8.in"));}
-TEST(Semantic, misc9) {EXPECT_NO_THROW(runSemantic("testcases/misc9.in"));}
-TEST(Semantic, return1) {EXPECT_ANY_THROW(runSemantic("testcases/return1.in"));}
-TEST(Semantic, return10) {EXPECT_ANY_THROW(runSemantic("testcases/return10.in"));}
-TEST(Semantic, return11) {EXPECT_ANY_THROW(runSemantic("testcases/return11.in"));}
-TEST(Semantic, return12) {EXPECT_NO_THROW(runSemantic("testcases/return12.in"));}
-TEST(Semantic, return13) {EXPECT_NO_THROW(runSemantic("testcases/return13.in"));}
-TEST(Semantic, return14) {EXPECT_NO_THROW(runSemantic("testcases/return14.in"));}
-TEST(Semantic, return15) {EXPECT_NO_THROW(runSemantic("testcases/return15.in"));}
-TEST(Semantic, return2) {EXPECT_NO_THROW(runSemantic("testcases/return2.in"));}
-TEST(Semantic, return3) {EXPECT_ANY_THROW(runSemantic("testcases/return3.in"));}
-TEST(Semantic, return4) {EXPECT_ANY_THROW(runSemantic("testcases/return4.in"));}
-TEST(Semantic, return5) {EXPECT_ANY_THROW(runSemantic("testcases/return5.in"));}
-TEST(Semantic, return6) {EXPECT_ANY_THROW(runSemantic("testcases/return6.in"));}
-TEST(Semantic, return7) {EXPECT_ANY_THROW(runSemantic("testcases/return7.in"));}
-TEST(Semantic, return8) {EXPECT_NO_THROW(runSemantic("testcases/return8.in"));}
-TEST(Semantic, return9) {EXPECT_ANY_THROW(runSemantic("testcases/return9.in"));}
-TEST(Semantic, type1) {EXPECT_ANY_THROW(runSemantic("testcases/type1.in"));}
-TEST(Semantic, type10) {EXPECT_ANY_THROW(runSemantic("testcases/type10.in"));}
-TEST(Semantic, type11) {EXPECT_ANY_THROW(runSemantic("testcases/type11.in"));}
-TEST(Semantic, type12) {EXPECT_ANY_THROW(runSemantic("testcases/type12.in"));}
-TEST(Semantic, type13) {EXPECT_ANY_THROW(runSemantic("testcases/type13.in"));}
-TEST(Semantic, type14) {EXPECT_ANY_THROW(runSemantic("testcases/type14.in"));}
-TEST(Semantic, type15) {EXPECT_ANY_THROW(runSemantic("testcases/type15.in"));}
-TEST(Semantic, type16) {EXPECT_ANY_THROW(runSemantic("testcases/type16.in"));}
-TEST(Semantic, type17) {EXPECT_ANY_THROW(runSemantic("testcases/type17.in"));}
-TEST(Semantic, type18) {EXPECT_ANY_THROW(runSemantic("testcases/type18.in"));}
-TEST(Semantic, type19) {EXPECT_ANY_THROW(runSemantic("testcases/type19.in"));}
-TEST(Semantic, type2) {EXPECT_ANY_THROW(runSemantic("testcases/type2.in"));}
-TEST(Semantic, type20) {EXPECT_ANY_THROW(runSemantic("testcases/type20.in"));}
-TEST(Semantic, type3) {EXPECT_ANY_THROW(runSemantic("testcases/type3.in"));}
-TEST(Semantic, type4) {EXPECT_ANY_THROW(runSemantic("testcases/type4.in"));}
-TEST(Semantic, type5) {EXPECT_ANY_THROW(runSemantic("testcases/type5.in"));}
-TEST(Semantic, type6) {EXPECT_ANY_THROW(runSemantic("testcases/type6.in"));}
-TEST(Semantic, type7) {EXPECT_ANY_THROW(runSemantic("testcases/type7.in"));}
-TEST(Semantic, type8) {EXPECT_ANY_THROW(runSemantic("testcases/type8.in"));}
-TEST(Semantic, type9) {EXPECT_ANY_THROW(runSemantic("testcases/type9.in"));}
+TEST(semantic2, comprehensive1) {
+    EXPECT_NO_THROW(runSemantic("comprehensive1.in"));
+}
+TEST(semantic2, comprehensive10) {
+    EXPECT_NO_THROW(runSemantic("comprehensive10.in"));
+}
+TEST(semantic2, comprehensive11) {
+    EXPECT_NO_THROW(runSemantic("comprehensive11.in"));
+}
+TEST(semantic2, comprehensive12) {
+    EXPECT_NO_THROW(runSemantic("comprehensive12.in"));
+}
+TEST(semantic2, comprehensive13) {
+    EXPECT_NO_THROW(runSemantic("comprehensive13.in"));
+}
+TEST(semantic2, comprehensive14) {
+    EXPECT_NO_THROW(runSemantic("comprehensive14.in"));
+}
+TEST(semantic2, comprehensive15) {
+    EXPECT_NO_THROW(runSemantic("comprehensive15.in"));
+}
+TEST(semantic2, comprehensive16) {
+    EXPECT_NO_THROW(runSemantic("comprehensive16.in"));
+}
+TEST(semantic2, comprehensive17) {
+    EXPECT_NO_THROW(runSemantic("comprehensive17.in"));
+}
+TEST(semantic2, comprehensive18) {
+    EXPECT_NO_THROW(runSemantic("comprehensive18.in"));
+}
+TEST(semantic2, comprehensive19) {
+    EXPECT_NO_THROW(runSemantic("comprehensive19.in"));
+}
+TEST(semantic2, comprehensive2) {
+    EXPECT_NO_THROW(runSemantic("comprehensive2.in"));
+}
+TEST(semantic2, comprehensive20) {
+    EXPECT_NO_THROW(runSemantic("comprehensive20.in"));
+}
+TEST(semantic2, comprehensive21) {
+    EXPECT_NO_THROW(runSemantic("comprehensive21.in"));
+}
+TEST(semantic2, comprehensive22) {
+    EXPECT_NO_THROW(runSemantic("comprehensive22.in"));
+}
+TEST(semantic2, comprehensive23) {
+    EXPECT_NO_THROW(runSemantic("comprehensive23.in"));
+}
+TEST(semantic2, comprehensive24) {
+    EXPECT_NO_THROW(runSemantic("comprehensive24.in"));
+}
+TEST(semantic2, comprehensive25) {
+    EXPECT_NO_THROW(runSemantic("comprehensive25.in"));
+}
+TEST(semantic2, comprehensive26) {
+    EXPECT_NO_THROW(runSemantic("comprehensive26.in"));
+}
+TEST(semantic2, comprehensive27) {
+    EXPECT_NO_THROW(runSemantic("comprehensive27.in"));
+}
+TEST(semantic2, comprehensive28) {
+    EXPECT_NO_THROW(runSemantic("comprehensive28.in"));
+}
+TEST(semantic2, comprehensive29) {
+    EXPECT_NO_THROW(runSemantic("comprehensive29.in"));
+}
+TEST(semantic2, comprehensive3) {
+    EXPECT_NO_THROW(runSemantic("comprehensive3.in"));
+}
+TEST(semantic2, comprehensive30) {
+    EXPECT_NO_THROW(runSemantic("comprehensive30.in"));
+}
+TEST(semantic2, comprehensive31) {
+    EXPECT_NO_THROW(runSemantic("comprehensive31.in"));
+}
+TEST(semantic2, comprehensive32) {
+    EXPECT_NO_THROW(runSemantic("comprehensive32.in"));
+}
+TEST(semantic2, comprehensive33) {
+    EXPECT_NO_THROW(runSemantic("comprehensive33.in"));
+}
+TEST(semantic2, comprehensive34) {
+    EXPECT_NO_THROW(runSemantic("comprehensive34.in"));
+}
+TEST(semantic2, comprehensive35) {
+    EXPECT_NO_THROW(runSemantic("comprehensive35.in"));
+}
+TEST(semantic2, comprehensive36) {
+    EXPECT_NO_THROW(runSemantic("comprehensive36.in"));
+}
+TEST(semantic2, comprehensive37) {
+    EXPECT_NO_THROW(runSemantic("comprehensive37.in"));
+}
+TEST(semantic2, comprehensive38) {
+    EXPECT_NO_THROW(runSemantic("comprehensive38.in"));
+}
+TEST(semantic2, comprehensive39) {
+    EXPECT_NO_THROW(runSemantic("comprehensive39.in"));
+}
+TEST(semantic2, comprehensive4) {
+    EXPECT_NO_THROW(runSemantic("comprehensive4.in"));
+}
+TEST(semantic2, comprehensive40) {
+    EXPECT_NO_THROW(runSemantic("comprehensive40.in"));
+}
+TEST(semantic2, comprehensive41) {
+    EXPECT_NO_THROW(runSemantic("comprehensive41.in"));
+}
+TEST(semantic2, comprehensive42) {
+    EXPECT_NO_THROW(runSemantic("comprehensive42.in"));
+}
+TEST(semantic2, comprehensive43) {
+    EXPECT_NO_THROW(runSemantic("comprehensive43.in"));
+}
+TEST(semantic2, comprehensive44) {
+    EXPECT_NO_THROW(runSemantic("comprehensive44.in"));
+}
+TEST(semantic2, comprehensive45) {
+    EXPECT_NO_THROW(runSemantic("comprehensive45.in"));
+}
+TEST(semantic2, comprehensive46) {
+    EXPECT_NO_THROW(runSemantic("comprehensive46.in"));
+}
+TEST(semantic2, comprehensive47) {
+    EXPECT_NO_THROW(runSemantic("comprehensive47.in"));
+}
+TEST(semantic2, comprehensive48) {
+    EXPECT_NO_THROW(runSemantic("comprehensive48.in"));
+}
+TEST(semantic2, comprehensive49) {
+    EXPECT_NO_THROW(runSemantic("comprehensive49.in"));
+}
+TEST(semantic2, comprehensive5) {
+    EXPECT_NO_THROW(runSemantic("comprehensive5.in"));
+}
+TEST(semantic2, comprehensive50) {
+    EXPECT_NO_THROW(runSemantic("comprehensive50.in"));
+}
+TEST(semantic2, comprehensive6) {
+    EXPECT_NO_THROW(runSemantic("comprehensive6.in"));
+}
+TEST(semantic2, comprehensive7) {
+    EXPECT_NO_THROW(runSemantic("comprehensive7.in"));
+}
+TEST(semantic2, comprehensive8) {
+    EXPECT_NO_THROW(runSemantic("comprehensive8.in"));
+}
+TEST(semantic2, comprehensive9) {
+    EXPECT_NO_THROW(runSemantic("comprehensive9.in"));
+}
+TEST(semantic1, array1) {
+    EXPECT_NO_THROW(runSemantic("array1.in"));
+}
+TEST(semantic1, array2) {
+    EXPECT_NO_THROW(runSemantic("array2.in"));
+}
+TEST(semantic1, array3) {
+    EXPECT_NO_THROW(runSemantic("array3.in"));
+}
+TEST(semantic1, array4) {
+    EXPECT_ANY_THROW(runSemantic("array4.in"));
+}
+TEST(semantic1, array5) {
+    EXPECT_ANY_THROW(runSemantic("array5.in"));
+}
+TEST(semantic1, array6) {
+    EXPECT_ANY_THROW(runSemantic("array6.in"));
+}
+TEST(semantic1, array7) {
+    EXPECT_ANY_THROW(runSemantic("array7.in"));
+}
+TEST(semantic1, array8) {
+    EXPECT_ANY_THROW(runSemantic("array8.in"));
+}
+TEST(semantic1, autoref1) {
+    EXPECT_NO_THROW(runSemantic("autoref1.in"));
+}
+TEST(semantic1, autoref2) {
+    EXPECT_NO_THROW(runSemantic("autoref2.in"));
+}
+TEST(semantic1, autoref3) {
+    EXPECT_NO_THROW(runSemantic("autoref3.in"));
+}
+TEST(semantic1, autoref4) {
+    EXPECT_NO_THROW(runSemantic("autoref4.in"));
+}
+TEST(semantic1, autoref5) {
+    EXPECT_NO_THROW(runSemantic("autoref5.in"));
+}
+TEST(semantic1, autoref6) {
+    EXPECT_NO_THROW(runSemantic("autoref6.in"));
+}
+TEST(semantic1, autoref7) {
+    EXPECT_ANY_THROW(runSemantic("autoref7.in"));
+}
+TEST(semantic1, autoref8) {
+    EXPECT_ANY_THROW(runSemantic("autoref8.in"));
+}
+TEST(semantic1, autoref9) {
+    EXPECT_NO_THROW(runSemantic("autoref9.in"));
+}
+TEST(semantic1, basic1) {
+    EXPECT_NO_THROW(runSemantic("basic1.in"));
+}
+TEST(semantic1, basic10) {
+    EXPECT_ANY_THROW(runSemantic("basic10.in"));
+}
+TEST(semantic1, basic11) {
+    EXPECT_NO_THROW(runSemantic("basic11.in"));
+}
+TEST(semantic1, basic12) {
+    EXPECT_ANY_THROW(runSemantic("basic12.in"));
+}
+TEST(semantic1, basic13) {
+    EXPECT_ANY_THROW(runSemantic("basic13.in"));
+}
+TEST(semantic1, basic14) {
+    EXPECT_ANY_THROW(runSemantic("basic14.in"));
+}
+TEST(semantic1, basic15) {
+    EXPECT_ANY_THROW(runSemantic("basic15.in"));
+}
+TEST(semantic1, basic16) {
+    EXPECT_ANY_THROW(runSemantic("basic16.in"));
+}
+TEST(semantic1, basic17) {
+    EXPECT_NO_THROW(runSemantic("basic17.in"));
+}
+TEST(semantic1, basic18) {
+    EXPECT_NO_THROW(runSemantic("basic18.in"));
+}
+TEST(semantic1, basic19) {
+    EXPECT_NO_THROW(runSemantic("basic19.in"));
+}
+TEST(semantic1, basic2) {
+    EXPECT_ANY_THROW(runSemantic("basic2.in"));
+}
+TEST(semantic1, basic20) {
+    EXPECT_NO_THROW(runSemantic("basic20.in"));
+}
+TEST(semantic1, basic21) {
+    EXPECT_NO_THROW(runSemantic("basic21.in"));
+}
+TEST(semantic1, basic22) {
+    EXPECT_NO_THROW(runSemantic("basic22.in"));
+}
+TEST(semantic1, basic23) {
+    EXPECT_NO_THROW(runSemantic("basic23.in"));
+}
+TEST(semantic1, basic24) {
+    EXPECT_NO_THROW(runSemantic("basic24.in"));
+}
+TEST(semantic1, basic25) {
+    EXPECT_NO_THROW(runSemantic("basic25.in"));
+}
+TEST(semantic1, basic26) {
+    EXPECT_NO_THROW(runSemantic("basic26.in"));
+}
+TEST(semantic1, basic27) {
+    EXPECT_NO_THROW(runSemantic("basic27.in"));
+}
+TEST(semantic1, basic28) {
+    EXPECT_ANY_THROW(runSemantic("basic28.in"));
+}
+TEST(semantic1, basic29) {
+    EXPECT_NO_THROW(runSemantic("basic29.in"));
+}
+TEST(semantic1, basic3) {
+    EXPECT_ANY_THROW(runSemantic("basic3.in"));
+}
+TEST(semantic1, basic30) {
+    EXPECT_ANY_THROW(runSemantic("basic30.in"));
+}
+TEST(semantic1, basic31) {
+    EXPECT_ANY_THROW(runSemantic("basic31.in"));
+}
+TEST(semantic1, basic32) {
+    EXPECT_ANY_THROW(runSemantic("basic32.in"));
+}
+TEST(semantic1, basic33) {
+    EXPECT_ANY_THROW(runSemantic("basic33.in"));
+}
+TEST(semantic1, basic34) {
+    EXPECT_ANY_THROW(runSemantic("basic34.in"));
+}
+TEST(semantic1, basic35) {
+    EXPECT_ANY_THROW(runSemantic("basic35.in"));
+}
+TEST(semantic1, basic36) {
+    EXPECT_NO_THROW(runSemantic("basic36.in"));
+}
+TEST(semantic1, basic37) {
+    EXPECT_NO_THROW(runSemantic("basic37.in"));
+}
+TEST(semantic1, basic38) {
+    EXPECT_ANY_THROW(runSemantic("basic38.in"));
+}
+TEST(semantic1, basic39) {
+    EXPECT_NO_THROW(runSemantic("basic39.in"));
+}
+TEST(semantic1, basic4) {
+    EXPECT_NO_THROW(runSemantic("basic4.in"));
+}
+TEST(semantic1, basic40) {
+    EXPECT_NO_THROW(runSemantic("basic40.in"));
+}
+TEST(semantic1, basic5) {
+    EXPECT_ANY_THROW(runSemantic("basic5.in"));
+}
+TEST(semantic1, basic6) {
+    EXPECT_ANY_THROW(runSemantic("basic6.in"));
+}
+TEST(semantic1, basic7) {
+    EXPECT_ANY_THROW(runSemantic("basic7.in"));
+}
+TEST(semantic1, basic8) {
+    EXPECT_ANY_THROW(runSemantic("basic8.in"));
+}
+TEST(semantic1, basic9) {
+    EXPECT_ANY_THROW(runSemantic("basic9.in"));
+}
+TEST(semantic1, expr1) {
+    EXPECT_ANY_THROW(runSemantic("expr1.in"));
+}
+TEST(semantic1, expr10) {
+    EXPECT_ANY_THROW(runSemantic("expr10.in"));
+}
+TEST(semantic1, expr11) {
+    EXPECT_ANY_THROW(runSemantic("expr11.in"));
+}
+TEST(semantic1, expr12) {
+    EXPECT_ANY_THROW(runSemantic("expr12.in"));
+}
+TEST(semantic1, expr13) {
+    EXPECT_NO_THROW(runSemantic("expr13.in"));
+}
+TEST(semantic1, expr14) {
+    EXPECT_ANY_THROW(runSemantic("expr14.in"));
+}
+TEST(semantic1, expr15) {
+    EXPECT_ANY_THROW(runSemantic("expr15.in"));
+}
+TEST(semantic1, expr16) {
+    EXPECT_ANY_THROW(runSemantic("expr16.in"));
+}
+TEST(semantic1, expr17) {
+    EXPECT_NO_THROW(runSemantic("expr17.in"));
+}
+TEST(semantic1, expr18) {
+    EXPECT_ANY_THROW(runSemantic("expr18.in"));
+}
+TEST(semantic1, expr19) {
+    EXPECT_NO_THROW(runSemantic("expr19.in"));
+}
+TEST(semantic1, expr2) {
+    EXPECT_ANY_THROW(runSemantic("expr2.in"));
+}
+TEST(semantic1, expr20) {
+    EXPECT_ANY_THROW(runSemantic("expr20.in"));
+}
+TEST(semantic1, expr21) {
+    EXPECT_ANY_THROW(runSemantic("expr21.in"));
+}
+TEST(semantic1, expr22) {
+    EXPECT_ANY_THROW(runSemantic("expr22.in"));
+}
+TEST(semantic1, expr23) {
+    EXPECT_ANY_THROW(runSemantic("expr23.in"));
+}
+TEST(semantic1, expr24) {
+    EXPECT_ANY_THROW(runSemantic("expr24.in"));
+}
+TEST(semantic1, expr25) {
+    EXPECT_ANY_THROW(runSemantic("expr25.in"));
+}
+TEST(semantic1, expr26) {
+    EXPECT_ANY_THROW(runSemantic("expr26.in"));
+}
+TEST(semantic1, expr27) {
+    EXPECT_ANY_THROW(runSemantic("expr27.in"));
+}
+TEST(semantic1, expr28) {
+    EXPECT_ANY_THROW(runSemantic("expr28.in"));
+}
+TEST(semantic1, expr29) {
+    EXPECT_ANY_THROW(runSemantic("expr29.in"));
+}
+TEST(semantic1, expr3) {
+    EXPECT_ANY_THROW(runSemantic("expr3.in"));
+}
+TEST(semantic1, expr30) {
+    EXPECT_ANY_THROW(runSemantic("expr30.in"));
+}
+TEST(semantic1, expr31) {
+    EXPECT_ANY_THROW(runSemantic("expr31.in"));
+}
+TEST(semantic1, expr32) {
+    EXPECT_ANY_THROW(runSemantic("expr32.in"));
+}
+TEST(semantic1, expr33) {
+    EXPECT_NO_THROW(runSemantic("expr33.in"));
+}
+TEST(semantic1, expr34) {
+    EXPECT_NO_THROW(runSemantic("expr34.in"));
+}
+TEST(semantic1, expr35) {
+    EXPECT_ANY_THROW(runSemantic("expr35.in"));
+}
+TEST(semantic1, expr36) {
+    EXPECT_NO_THROW(runSemantic("expr36.in"));
+}
+TEST(semantic1, expr37) {
+    EXPECT_ANY_THROW(runSemantic("expr37.in"));
+}
+TEST(semantic1, expr38) {
+    EXPECT_NO_THROW(runSemantic("expr38.in"));
+}
+TEST(semantic1, expr39) {
+    EXPECT_ANY_THROW(runSemantic("expr39.in"));
+}
+TEST(semantic1, expr4) {
+    EXPECT_ANY_THROW(runSemantic("expr4.in"));
+}
+TEST(semantic1, expr40) {
+    EXPECT_ANY_THROW(runSemantic("expr40.in"));
+}
+TEST(semantic1, expr5) {
+    EXPECT_ANY_THROW(runSemantic("expr5.in"));
+}
+TEST(semantic1, expr6) {
+    EXPECT_ANY_THROW(runSemantic("expr6.in"));
+}
+TEST(semantic1, expr7) {
+    EXPECT_ANY_THROW(runSemantic("expr7.in"));
+}
+TEST(semantic1, expr8) {
+    EXPECT_ANY_THROW(runSemantic("expr8.in"));
+}
+TEST(semantic1, expr9) {
+    EXPECT_ANY_THROW(runSemantic("expr9.in"));
+}
+TEST(semantic1, if1) {
+    EXPECT_NO_THROW(runSemantic("if1.in"));
+}
+TEST(semantic1, if10) {
+    EXPECT_NO_THROW(runSemantic("if10.in"));
+}
+TEST(semantic1, if11) {
+    EXPECT_ANY_THROW(runSemantic("if11.in"));
+}
+TEST(semantic1, if12) {
+    EXPECT_ANY_THROW(runSemantic("if12.in"));
+}
+TEST(semantic1, if13) {
+    EXPECT_ANY_THROW(runSemantic("if13.in"));
+}
+TEST(semantic1, if14) {
+    EXPECT_ANY_THROW(runSemantic("if14.in"));
+}
+TEST(semantic1, if15) {
+    EXPECT_ANY_THROW(runSemantic("if15.in"));
+}
+TEST(semantic1, if2) {
+    EXPECT_NO_THROW(runSemantic("if2.in"));
+}
+TEST(semantic1, if3) {
+    EXPECT_NO_THROW(runSemantic("if3.in"));
+}
+TEST(semantic1, if4) {
+    EXPECT_NO_THROW(runSemantic("if4.in"));
+}
+TEST(semantic1, if5) {
+    EXPECT_NO_THROW(runSemantic("if5.in"));
+}
+TEST(semantic1, if6) {
+    EXPECT_NO_THROW(runSemantic("if6.in"));
+}
+TEST(semantic1, if7) {
+    EXPECT_NO_THROW(runSemantic("if7.in"));
+}
+TEST(semantic1, if8) {
+    EXPECT_NO_THROW(runSemantic("if8.in"));
+}
+TEST(semantic1, if9) {
+    EXPECT_NO_THROW(runSemantic("if9.in"));
+}
+TEST(semantic1, loop1) {
+    EXPECT_NO_THROW(runSemantic("loop1.in"));
+}
+TEST(semantic1, loop10) {
+    EXPECT_ANY_THROW(runSemantic("loop10.in"));
+}
+TEST(semantic1, loop2) {
+    EXPECT_NO_THROW(runSemantic("loop2.in"));
+}
+TEST(semantic1, loop3) {
+    EXPECT_NO_THROW(runSemantic("loop3.in"));
+}
+TEST(semantic1, loop4) {
+    EXPECT_NO_THROW(runSemantic("loop4.in"));
+}
+TEST(semantic1, loop5) {
+    EXPECT_NO_THROW(runSemantic("loop5.in"));
+}
+TEST(semantic1, loop6) {
+    EXPECT_ANY_THROW(runSemantic("loop6.in"));
+}
+TEST(semantic1, loop7) {
+    EXPECT_ANY_THROW(runSemantic("loop7.in"));
+}
+TEST(semantic1, loop8) {
+    EXPECT_ANY_THROW(runSemantic("loop8.in"));
+}
+TEST(semantic1, loop9) {
+    EXPECT_ANY_THROW(runSemantic("loop9.in"));
+}
+TEST(semantic1, misc1) {
+    EXPECT_NO_THROW(runSemantic("misc1.in"));
+}
+TEST(semantic1, misc10) {
+    EXPECT_NO_THROW(runSemantic("misc10.in"));
+}
+TEST(semantic1, misc11) {
+    EXPECT_NO_THROW(runSemantic("misc11.in"));
+}
+TEST(semantic1, misc12) {
+    EXPECT_NO_THROW(runSemantic("misc12.in"));
+}
+TEST(semantic1, misc13) {
+    EXPECT_NO_THROW(runSemantic("misc13.in"));
+}
+TEST(semantic1, misc14) {
+    EXPECT_NO_THROW(runSemantic("misc14.in"));
+}
+TEST(semantic1, misc15) {
+    EXPECT_NO_THROW(runSemantic("misc15.in"));
+}
+TEST(semantic1, misc16) {
+    EXPECT_NO_THROW(runSemantic("misc16.in"));
+}
+TEST(semantic1, misc17) {
+    EXPECT_NO_THROW(runSemantic("misc17.in"));
+}
+TEST(semantic1, misc18) {
+    EXPECT_NO_THROW(runSemantic("misc18.in"));
+}
+TEST(semantic1, misc19) {
+    EXPECT_NO_THROW(runSemantic("misc19.in"));
+}
+TEST(semantic1, misc2) {
+    EXPECT_NO_THROW(runSemantic("misc2.in"));
+}
+TEST(semantic1, misc20) {
+    EXPECT_NO_THROW(runSemantic("misc20.in"));
+}
+TEST(semantic1, misc21) {
+    EXPECT_NO_THROW(runSemantic("misc21.in"));
+}
+TEST(semantic1, misc22) {
+    EXPECT_NO_THROW(runSemantic("misc22.in"));
+}
+TEST(semantic1, misc23) {
+    EXPECT_NO_THROW(runSemantic("misc23.in"));
+}
+TEST(semantic1, misc24) {
+    EXPECT_NO_THROW(runSemantic("misc24.in"));
+}
+TEST(semantic1, misc25) {
+    EXPECT_NO_THROW(runSemantic("misc25.in"));
+}
+TEST(semantic1, misc26) {
+    EXPECT_NO_THROW(runSemantic("misc26.in"));
+}
+TEST(semantic1, misc27) {
+    EXPECT_NO_THROW(runSemantic("misc27.in"));
+}
+TEST(semantic1, misc28) {
+    EXPECT_NO_THROW(runSemantic("misc28.in"));
+}
+TEST(semantic1, misc29) {
+    EXPECT_NO_THROW(runSemantic("misc29.in"));
+}
+TEST(semantic1, misc3) {
+    EXPECT_NO_THROW(runSemantic("misc3.in"));
+}
+TEST(semantic1, misc30) {
+    EXPECT_NO_THROW(runSemantic("misc30.in"));
+}
+TEST(semantic1, misc31) {
+    EXPECT_NO_THROW(runSemantic("misc31.in"));
+}
+TEST(semantic1, misc32) {
+    EXPECT_NO_THROW(runSemantic("misc32.in"));
+}
+TEST(semantic1, misc33) {
+    EXPECT_NO_THROW(runSemantic("misc33.in"));
+}
+TEST(semantic1, misc34) {
+    EXPECT_NO_THROW(runSemantic("misc34.in"));
+}
+TEST(semantic1, misc35) {
+    EXPECT_NO_THROW(runSemantic("misc35.in"));
+}
+TEST(semantic1, misc36) {
+    EXPECT_NO_THROW(runSemantic("misc36.in"));
+}
+TEST(semantic1, misc37) {
+    EXPECT_NO_THROW(runSemantic("misc37.in"));
+}
+TEST(semantic1, misc38) {
+    EXPECT_NO_THROW(runSemantic("misc38.in"));
+}
+TEST(semantic1, misc39) {
+    EXPECT_NO_THROW(runSemantic("misc39.in"));
+}
+TEST(semantic1, misc4) {
+    EXPECT_NO_THROW(runSemantic("misc4.in"));
+}
+TEST(semantic1, misc40) {
+    EXPECT_NO_THROW(runSemantic("misc40.in"));
+}
+TEST(semantic1, misc41) {
+    EXPECT_NO_THROW(runSemantic("misc41.in"));
+}
+TEST(semantic1, misc42) {
+    EXPECT_NO_THROW(runSemantic("misc42.in"));
+}
+TEST(semantic1, misc43) {
+    EXPECT_NO_THROW(runSemantic("misc43.in"));
+}
+TEST(semantic1, misc44) {
+    EXPECT_NO_THROW(runSemantic("misc44.in"));
+}
+TEST(semantic1, misc45) {
+    EXPECT_NO_THROW(runSemantic("misc45.in"));
+}
+TEST(semantic1, misc46) {
+    EXPECT_NO_THROW(runSemantic("misc46.in"));
+}
+TEST(semantic1, misc47) {
+    EXPECT_NO_THROW(runSemantic("misc47.in"));
+}
+TEST(semantic1, misc48) {
+    EXPECT_NO_THROW(runSemantic("misc48.in"));
+}
+TEST(semantic1, misc49) {
+    EXPECT_NO_THROW(runSemantic("misc49.in"));
+}
+TEST(semantic1, misc5) {
+    EXPECT_NO_THROW(runSemantic("misc5.in"));
+}
+TEST(semantic1, misc50) {
+    EXPECT_NO_THROW(runSemantic("misc50.in"));
+}
+TEST(semantic1, misc51) {
+    EXPECT_NO_THROW(runSemantic("misc51.in"));
+}
+TEST(semantic1, misc52) {
+    EXPECT_NO_THROW(runSemantic("misc52.in"));
+}
+TEST(semantic1, misc53) {
+    EXPECT_NO_THROW(runSemantic("misc53.in"));
+}
+TEST(semantic1, misc54) {
+    EXPECT_NO_THROW(runSemantic("misc54.in"));
+}
+TEST(semantic1, misc55) {
+    EXPECT_NO_THROW(runSemantic("misc55.in"));
+}
+TEST(semantic1, misc56) {
+    EXPECT_ANY_THROW(runSemantic("misc56.in"));
+}
+TEST(semantic1, misc57) {
+    EXPECT_ANY_THROW(runSemantic("misc57.in"));
+}
+TEST(semantic1, misc58) {
+    EXPECT_ANY_THROW(runSemantic("misc58.in"));
+}
+TEST(semantic1, misc59) {
+    EXPECT_ANY_THROW(runSemantic("misc59.in"));
+}
+TEST(semantic1, misc6) {
+    EXPECT_NO_THROW(runSemantic("misc6.in"));
+}
+TEST(semantic1, misc60) {
+    EXPECT_ANY_THROW(runSemantic("misc60.in"));
+}
+TEST(semantic1, misc61) {
+    EXPECT_ANY_THROW(runSemantic("misc61.in"));
+}
+TEST(semantic1, misc62) {
+    EXPECT_ANY_THROW(runSemantic("misc62.in"));
+}
+TEST(semantic1, misc63) {
+    EXPECT_ANY_THROW(runSemantic("misc63.in"));
+}
+TEST(semantic1, misc64) {
+    EXPECT_ANY_THROW(runSemantic("misc64.in"));
+}
+TEST(semantic1, misc65) {
+    EXPECT_NO_THROW(runSemantic("misc65.in"));
+}
+TEST(semantic1, misc7) {
+    EXPECT_NO_THROW(runSemantic("misc7.in"));
+}
+TEST(semantic1, misc8) {
+    EXPECT_NO_THROW(runSemantic("misc8.in"));
+}
+TEST(semantic1, misc9) {
+    EXPECT_NO_THROW(runSemantic("misc9.in"));
+}
+TEST(semantic1, return1) {
+    EXPECT_ANY_THROW(runSemantic("return1.in"));
+}
+TEST(semantic1, return10) {
+    EXPECT_ANY_THROW(runSemantic("return10.in"));
+}
+TEST(semantic1, return11) {
+    EXPECT_ANY_THROW(runSemantic("return11.in"));
+}
+TEST(semantic1, return12) {
+    EXPECT_NO_THROW(runSemantic("return12.in"));
+}
+TEST(semantic1, return13) {
+    EXPECT_NO_THROW(runSemantic("return13.in"));
+}
+TEST(semantic1, return14) {
+    EXPECT_NO_THROW(runSemantic("return14.in"));
+}
+TEST(semantic1, return15) {
+    EXPECT_NO_THROW(runSemantic("return15.in"));
+}
+TEST(semantic1, return2) {
+    EXPECT_NO_THROW(runSemantic("return2.in"));
+}
+TEST(semantic1, return3) {
+    EXPECT_ANY_THROW(runSemantic("return3.in"));
+}
+TEST(semantic1, return4) {
+    EXPECT_ANY_THROW(runSemantic("return4.in"));
+}
+TEST(semantic1, return5) {
+    EXPECT_ANY_THROW(runSemantic("return5.in"));
+}
+TEST(semantic1, return6) {
+    EXPECT_ANY_THROW(runSemantic("return6.in"));
+}
+TEST(semantic1, return7) {
+    EXPECT_ANY_THROW(runSemantic("return7.in"));
+}
+TEST(semantic1, return8) {
+    EXPECT_NO_THROW(runSemantic("return8.in"));
+}
+TEST(semantic1, return9) {
+    EXPECT_ANY_THROW(runSemantic("return9.in"));
+}
+TEST(semantic1, type1) {
+    EXPECT_ANY_THROW(runSemantic("type1.in"));
+}
+TEST(semantic1, type10) {
+    EXPECT_ANY_THROW(runSemantic("type10.in"));
+}
+TEST(semantic1, type11) {
+    EXPECT_ANY_THROW(runSemantic("type11.in"));
+}
+TEST(semantic1, type12) {
+    EXPECT_ANY_THROW(runSemantic("type12.in"));
+}
+TEST(semantic1, type13) {
+    EXPECT_ANY_THROW(runSemantic("type13.in"));
+}
+TEST(semantic1, type14) {
+    EXPECT_ANY_THROW(runSemantic("type14.in"));
+}
+TEST(semantic1, type15) {
+    EXPECT_ANY_THROW(runSemantic("type15.in"));
+}
+TEST(semantic1, type16) {
+    EXPECT_ANY_THROW(runSemantic("type16.in"));
+}
+TEST(semantic1, type17) {
+    EXPECT_ANY_THROW(runSemantic("type17.in"));
+}
+TEST(semantic1, type18) {
+    EXPECT_ANY_THROW(runSemantic("type18.in"));
+}
+TEST(semantic1, type19) {
+    EXPECT_ANY_THROW(runSemantic("type19.in"));
+}
+TEST(semantic1, type2) {
+    EXPECT_ANY_THROW(runSemantic("type2.in"));
+}
+TEST(semantic1, type20) {
+    EXPECT_ANY_THROW(runSemantic("type20.in"));
+}
+TEST(semantic1, type3) {
+    EXPECT_ANY_THROW(runSemantic("type3.in"));
+}
+TEST(semantic1, type4) {
+    EXPECT_ANY_THROW(runSemantic("type4.in"));
+}
+TEST(semantic1, type5) {
+    EXPECT_ANY_THROW(runSemantic("type5.in"));
+}
+TEST(semantic1, type6) {
+    EXPECT_ANY_THROW(runSemantic("type6.in"));
+}
+TEST(semantic1, type7) {
+    EXPECT_ANY_THROW(runSemantic("type7.in"));
+}
+TEST(semantic1, type8) {
+    EXPECT_ANY_THROW(runSemantic("type8.in"));
+}
+TEST(semantic1, type9) {
+    EXPECT_ANY_THROW(runSemantic("type9.in"));
+}
+TEST(IR1, misc1) {
+    EXPECT_NO_THROW(runSemantic("misc1.in"));
+}

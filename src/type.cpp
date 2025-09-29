@@ -491,14 +491,15 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             updateType(child, node, loopPtr, fnPtr);
             node->hasBreak |= child->hasBreak;
             node->hasReturn |= child->hasReturn;
+            node->hasAbsoluteBreak |= child->hasAbsoluteBreak;
         }
 
     if (node->type == astNodeType::FUNCTION)
         node->hasReturn = false;
     else if (node->type == astNodeType::WHILE)
-        node->hasBreak = node->hasReturn = false;
+        node->hasBreak = node->hasReturn = node->hasAbsoluteBreak = false;
     else if (node->type == astNodeType::LOOP)
-        node->hasBreak = false;
+        node->hasBreak = node->hasAbsoluteBreak = false;
     else if (node->type == astNodeType::IF && node->children.size() <= 2)
         node->hasReturn = node->hasBreak = false;
     else if (node->type == astNodeType::IF && node->children.size() == 3)
@@ -510,6 +511,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         node->hasBreak = true;
     else if (node->type == astNodeType::RETURN)
         node->hasReturn = true;
+    if (node->type == astNodeType::BREAK)
+        node->hasAbsoluteBreak = true;
 
     if (node->type == astNodeType::LET_STATEMENT)
     {
@@ -606,6 +609,8 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     {
         if (node->realType == ILLEGAL)
             node->realType = UNIT;
+        if (!node->children[0]->hasAbsoluteBreak)
+            node->realType = NEVER;
         deriveStrongTrans(node->children[0]->realType, UNIT);
     }
     else if (node->type == astNodeType::CONTINUE)
@@ -1131,7 +1136,6 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
             node->eval = res;
             if (father->type == astNodeType::UNARY_OPERATOR && father->value == "-")
                 res=-res;
-            std::cerr<<res<<std::endl;
             if (res > UINT_MAX || res < INT_MIN)
                 throw compileError();
             if (res >= 0 && res <= INT_MAX)

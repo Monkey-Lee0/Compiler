@@ -79,6 +79,7 @@ public:
     std::pair<Scope*, astNode*> scope;
     unsigned int curSonId=0;
     bool hasBreak=false, hasReturn=false;
+    bool hasAbsoluteBreak=false;
     bool isMutable=false;
     bool isVariable=false;
     std::vector<std::string> showSelf() const;

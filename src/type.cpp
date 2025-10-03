@@ -518,16 +518,24 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     if (node->type == astNodeType::LET_STATEMENT)
     {
         auto T0 = typeToItem(node->children[1]->realType);
-        if (node->children.size() == 3)
+        auto T1 = node->children[2]->realType;
+        deriveStrongTrans(T1, T0);
+        if (T0 == VERSATILE)
         {
-            auto T1 = node->children[2]->realType;
-            deriveStrongTrans(T1, T0);
+            T0 = T1;
+            if (T0 == INT || T0 == IINT)
+                T0 = I32;
+            if (T0 == UINT)
+                throw compileError();
+            if (T0 == NEVER)
+                T0 = UNIT;
         }
         scopeInfo value = {T0, std::any(),
             node->children[0]->value == "mut", false};
         if (findScopeItem(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
-        node->scope.first->setItem(node->value, value);
+        if (node->value != "_")
+            node->scope.first->setItem(node->value, value);
     }
     else if (node->type == astNodeType::STATEMENT_BLOCK)
     {

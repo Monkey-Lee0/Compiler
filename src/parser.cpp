@@ -253,24 +253,17 @@ void parser::appendLetStatement(astNode* node)
         src.consume();
         appendType(newNode);
     }
-    else if(node->value == "_")
+    else
     {
         newNode->type = astNodeType::TYPE;
         newNode->value = "_";
     }
-    else
-        throw compileError();
 
-    auto tk=src.consume();
-    if (tk == (token){tokenType::OPERATOR, "="})
-    {
-        newNode=new astNode;
-        appendSimpleExpression(newNode);
-        node->children.push_back(newNode);
-        src.expect({tokenType::OPERATOR, ";"});
-    }
-    else if (tk.type != tokenType::OPERATOR || tk.value != ";")
-        throw compileError();
+    auto tk=src.expect((token){tokenType::OPERATOR, "="});
+    newNode=new astNode;
+    appendSimpleExpression(newNode);
+    node->children.push_back(newNode);
+    src.expect({tokenType::OPERATOR, ";"});
 }
 
 void parser::appendConstStatement(astNode* node)

@@ -655,7 +655,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         auto T0 = node->children[0]->realType, T1  = node->children[1]->realType;
         auto E0 = node->children[0]->eval, E1  = node->children[1]->eval;
         if (node->value == "+" || node->value == "-" || node->value == "*" || node->value == "/" ||
-            node->value == "%" || node->value == "<<" || node->value == ">>")
+            node->value == "%")
         {
             if (T0.name == TypeName::REF)
                 T0 = *T0.typePtr;
@@ -679,7 +679,22 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                     node->eval = L1 / L2;
                 else if (node->value == "%")
                     node->eval = L1 % L2;
-                else if (node->value == "<<")
+            }
+        }
+        else if (node->value == "<<" || node->value == ">>")
+        {
+            if (T0.name == TypeName::REF)
+                T0 = *T0.typePtr;
+            if (T1.name == TypeName::REF)
+                T1 = *T1.typePtr;
+            if (!isNumber(T0) && !isNumber(T1))
+                throw compileError();
+            node->realType = T0;
+            if (E0.has_value() && E1.has_value())
+            {
+                auto L1 = std::any_cast<long long>(E0), L2 = std::any_cast<long long>(E1);
+                // overflow? No one cares.
+                if (node->value == "<<")
                     node->eval = L1 << L2;
                 else if (node->value == ">>")
                     node->eval = L1 >> L2;

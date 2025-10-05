@@ -331,12 +331,11 @@ fn editDistanceDP(string1: [i32; 50], string2: [i32; 50], len1: i32, len2: i32) 
                 let delete: i32 = dp[(((i - 1) * (len2 + 1)) + j) as usize] + 1;
                 let replace: i32 = dp[(((i - 1) * (len2 + 1)) + (j - 1)) as usize] + 1;
                 
-                let min_val: i32;
-                if (insert < delete) {
-                    min_val = insert;
+                let min_val: i32 = if (insert < delete) {
+                    insert
                 } else {
-                    min_val = delete;
-                }
+                    delete
+                };
                 
                 if (replace < min_val) {
                     dp[(i * (len2 + 1) + j) as usize] = replace;
@@ -1054,7 +1053,7 @@ fn calculateTourCost(mask: i32, distances: [i32; 225], num_cities: i32) -> i32 {
     let mut city: i32 = 1;
     
     while (city < num_cities) {
-        if (mask & (1 << city)) != 0 {
+        if ((mask & (1 << city)) != 0) {
             cost = cost + distances[(prev_city * num_cities + city) as usize];
             prev_city = city;
         }

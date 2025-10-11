@@ -18,8 +18,8 @@ add_executable(my_test test.cpp
         ../../src/parser.cpp
         ../../src/parser.h
         ../../src/ast.cpp
-        ../../src/type.cpp
-        ../../src/type.h)
+        ../../src/semantic.cpp
+        ../../src/semantic.h)
 
 # 3.3 链接被测库 + gtest
 target_link_libraries(my_test

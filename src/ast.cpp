@@ -185,6 +185,8 @@ std::vector<std::string> astNode::showSelf() const
     }
     if (isMutable)
         res.back().append(" mutable");
+    if (!irResult.empty())
+        res.back().append(" irResult:"+irResult);
     return res;
 }
 
@@ -214,7 +216,7 @@ std::vector<std::string> astNode::showTree() const
     return res;
 }
 
-scopeInfo C_ILLEGAL = {Type(TypeName::ILLEGAL), std::any(), false, false};
+scopeInfo C_ILLEGAL = {Type(TypeName::ILLEGAL), std::any(), false, false, 0};
 
 scopeInfo& Scope::getType(const std::string& name)
 {
@@ -228,5 +230,5 @@ scopeInfo& Scope::getItem(const std::string& name)
         return C_ILLEGAL;
     return itemTable[name];
 }
-void Scope::setType(const std::string& name, const scopeInfo& value){typeTable[name] = value;}
-void Scope::setItem(const std::string& name, const scopeInfo& value){itemTable[name] = value;}
+void Scope::setType(const std::string& name, const scopeInfo &value){typeTable[name] = value;}
+void Scope::setItem(const std::string& name, const scopeInfo &value){itemTable[name] = value;}

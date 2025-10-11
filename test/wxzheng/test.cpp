@@ -1,5 +1,5 @@
 #include "../../src/parser.h"
-#include "../../src/type.h"
+#include "../../src/semantic.h"
 #include<iostream>
 #include <gtest/gtest.h>
 
@@ -20,7 +20,7 @@ std::string openFile(std::string path)
 void runSemantic(std::string path)
 {
     const auto code=openFile(path);
-    semanticCheckType(parser(code).solve());
+    semanticCheck(parser(code).solve());
 }
 TEST(semantic2, comprehensive1) {
     EXPECT_NO_THROW(runSemantic("comprehensive1.in"));

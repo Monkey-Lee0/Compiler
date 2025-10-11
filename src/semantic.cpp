@@ -1,4 +1,4 @@
-#include "type.h"
+#include "semantic.h"
 
 #include<algorithm>
 
@@ -322,14 +322,14 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
         if (child->type == astNodeType::CONST_STATEMENT)
         {
             child->children[0]->scope = child->scope;
-            updateType(child->children[0], nullptr, nullptr, nullptr);
+            updateSemanticState(child->children[0], nullptr, nullptr, nullptr);
             child->children[1]->scope = child->scope;
-            updateType(child->children[1], nullptr, nullptr, nullptr);
+            updateSemanticState(child->children[1], nullptr, nullptr, nullptr);
             auto T0 = typeToItem(child->children[0]->realType), T1 = child->children[1]->realType;
             deriveStrongTrans(T1, T0);
             if (!child->children[1]->eval.has_value())
                 throw compileError();
-            scopeInfo value = {T0, child->children[1]->eval, false, true};
+            scopeInfo value = {T0, child->children[1]->eval, false, true, variableNum++};
             if (node->scope.first->getItem(child->value).isGlobal) // shadow
                 throw compileError();
             child->scope.first->setItem(child->value, value);
@@ -339,11 +339,11 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
         else if (child->type == astNodeType::FUNCTION)
         {
             child->children[0]->scope = child->scope;
-            child->scope.first->setItem("self", {UNIT, std::any(), false, false});
-            updateType(child->children[0], nullptr, nullptr, nullptr);
+            child->scope.first->setItem("self", {UNIT, std::any(), false, false, variableNum++});
+            updateSemanticState(child->children[0], nullptr, nullptr, nullptr);
             child->scope.first->itemTable.erase("self");
             child->children[1]->scope = child->scope;
-            updateType(child->children[1], nullptr, nullptr, nullptr);
+            updateSemanticState(child->children[1], nullptr, nullptr, nullptr);
             Type T(TypeName::FUNCTION, new Type(typeToItem(child->children[1]->realType)), -1);
             child->scope = std::make_pair(new Scope(), node);
             if (node->scope.first->getItem(child->value).isGlobal) // shadow
@@ -364,10 +364,10 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                         throw compileError();
                     if (!has2)
                         child->scope.first->setItem(id->value, {T0, std::any(),
-                         false, false});
+                         false, false, variableNum++});
                     else
                         child->scope.first->setItem(id->value, {T0, std::any(),
-                         true, false});
+                         true, false, variableNum++});
                     T.members.push_back(new Type(T0));
                 }
                 else if (i || SelfType == ILLEGAL)
@@ -386,17 +386,17 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                                 throw compileError();
                         }
                         child->scope.first->setItem("self", {T1,
-                            std::any(), false, false});
+                            std::any(), false, false, variableNum++});
                     }
                     else if (has1 && !has2)
                         child->scope.first->setItem("self", {castRef(T1),
-                            std::any(), false, false});
+                            std::any(), false, false, variableNum++});
                     else if (has1 && has2)
                         child->scope.first->setItem("self", {castMutRef(T1),
-                            std::any(), false, false});
+                            std::any(), false, false, variableNum++});
                     else
                         child->scope.first->setItem("self", {T1,
-                            std::any(), true, false});
+                            std::any(), true, false, variableNum++});
                     T.name = TypeName::METHOD;
                     T.SelfPtr = &child->scope.first->getItem("self").type;
                 }
@@ -406,7 +406,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                 T.SelfPtr = &SelfType;
             }
             node->scope.first->setItem(child->value,
-                {T, std::any(), false, true});
+                {T, std::any(), false, true, variableNum++});
         }
 
     // resolve struct dependency
@@ -420,18 +420,18 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             if (!child->children.empty())
             {
                 child->children[0]->scope = child->scope;
-                updateType(child->children[0], nullptr, nullptr, nullptr);
+                updateSemanticState(child->children[0], nullptr, nullptr, nullptr);
                 for (auto id:child->children[0]->children)
                 {
                     auto T0=typeToItem(id->children[0]->realType);
-                    child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true});
+                    child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true, variableNum++});
                 }
                 T->memberFieldNum = T->field->itemTable.size();
             }
             if (node->scope.first->getType(child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
-                , std::any(), false, true});
+                , std::any(), false, true, variableNum++});
         }
     //resolve impl dependency
         else if (child->type == astNodeType::IMPL)
@@ -440,7 +440,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             if (T.name != TypeName::STRUCT)
                 throw compileError();
             child->scope = std::make_pair(T.field, node);
-            T.field->setType("Self", {itemToType(T), std::any(), false, false});
+            T.field->setType("Self", {itemToType(T), std::any(), false, false, variableNum++});
             child->children[0]->scope = child->scope;
             resolveDependency(child->children[0], T);
         }
@@ -460,11 +460,11 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             if (findScopeType(node->scope, child->value).isGlobal)
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
-                , std::any(), false, true});
+                , std::any(), false, true, variableNum++});
         }
 }
 
-void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr)
+void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr)
 {
     node->father = father;
     if (node->realType != ILLEGAL || node->type == astNodeType::ENUM)
@@ -483,13 +483,13 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
         fnPtr = node;
 
     if (node->type == astNodeType::BINARY_OPERATOR && (node->value == "." || node->value == "::"))
-        updateType(node->children[0], node, father, loopPtr);
+        updateSemanticState(node->children[0], node, father, loopPtr);
     else
         for (int i=0 ;i<node->children.size(); i++)
         {
             auto child=node->children[i];
             node->curSonId=i;
-            updateType(child, node, loopPtr, fnPtr);
+            updateSemanticState(child, node, loopPtr, fnPtr);
             node->hasBreak |= child->hasBreak;
             node->hasReturn |= child->hasReturn;
             node->hasAbsoluteBreak |= child->hasAbsoluteBreak;
@@ -531,7 +531,7 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
                 T0 = UNIT;
         }
         scopeInfo value = {T0, std::any(),
-            node->children[0]->value == "mut", false};
+            node->children[0]->value == "mut", false, ++variableNum};
         if (findScopeItem(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
         if (node->value != "_")
@@ -539,7 +539,9 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     }
     else if (node->type == astNodeType::STATEMENT_BLOCK)
     {
-        if (node->children.size() == 0)
+        // TODO
+        // return value of statement block
+        if (node->children.empty())
             node->realType = UNIT;
         else
         {
@@ -1326,31 +1328,31 @@ void updateType(astNode* node, astNode* father, astNode* loopPtr, astNode* fnPtr
     }
 }
 
-void loadBuiltin(astNode* node)
+void loadBuiltinSemantic(astNode* node)
 {
     node->scope = std::make_pair(new Scope(), nullptr);
     auto T = (Type){TypeName::FUNCTION, &UNIT, 0};
     T.members.push_back(&I32);
     T.isExit = true;
-    node->scope.first->setItem("exit", {T, std::any(), false, true});
+    node->scope.first->setItem("exit", {T, std::any(), false, true, 0});
     T.isExit = false;
-    node->scope.first->setItem("printInt", {T, std::any(), false, true});
-    node->scope.first->setItem("printlnInt", {T, std::any(), false, true});
+    node->scope.first->setItem("printInt", {T, std::any(), false, true, 0});
+    node->scope.first->setItem("printlnInt", {T, std::any(), false, true, 0});
 
     T.members.back() = &REF_STR;
-    node->scope.first->setItem("print", {T, std::any(), false, true});
-    node->scope.first->setItem("println", {T, std::any(), false, true});
+    node->scope.first->setItem("print", {T, std::any(), false, true, 0});
+    node->scope.first->setItem("println", {T, std::any(), false, true, 0});
 
     T.typePtr = &I32;
     T.members.clear();
-    node->scope.first->setItem("getInt", {T, std::any(), false, true});
+    node->scope.first->setItem("getInt", {T, std::any(), false, true, 0});
 
     T.typePtr = &STRING;
-    node->scope.first->setItem("getString", {T, std::any(), false, true});
+    node->scope.first->setItem("getString", {T, std::any(), false, true, 0});
 }
 
-void semanticCheckType(astNode* node)
+void semanticCheck(astNode* node)
 {
-    loadBuiltin(node);
-    updateType(node, nullptr, nullptr, nullptr);
+    loadBuiltinSemantic(node);
+    updateSemanticState(node, nullptr, nullptr, nullptr);
 }

@@ -33,11 +33,21 @@ inline auto VERSATILE_T = Type(TypeName::TYPE, &VERSATILE, 0);
 
 struct Unit{};
 
-void updateType(astNode*, astNode*, astNode*, astNode*);
+Type itemToType(Type*);
 
-void loadBuiltin(astNode*);
+Type itemToType(const Type&);
 
-void semanticCheckType(astNode*);
+Type& typeToItem(const Type&);
+
+scopeInfo& findScopeType(const std::pair<Scope*,astNode*>&, const std::string&);
+
+scopeInfo& findScopeItem(const std::pair<Scope*,astNode*>&, const std::string&);
+
+void updateSemanticState(astNode*, astNode*, astNode*, astNode*);
+
+void loadBuiltinSemantic(astNode*);
+
+void semanticCheck(astNode*);
 
 
 #endif

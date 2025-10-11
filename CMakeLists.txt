@@ -17,6 +17,8 @@ add_executable(Compiler
         src/parser.cpp
         src/parser.h
         src/ast.cpp
-        src/type.cpp
-        src/type.h
+        src/semantic.cpp
+        src/semantic.h
+        src/ir.h
+        src/ir.cpp
 )

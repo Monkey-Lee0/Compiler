@@ -40,13 +40,19 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Type&);
 };
 
+inline unsigned long long variableNum = 0;
+
 class scopeInfo final
 {
 public:
+    scopeInfo()=default;
+    scopeInfo(const Type& a, const std::any& b, const bool& c, const bool & d,
+        const unsigned long long& e):type(a), eval(b), isMutable(c), isGlobal(d), ID(e){}
     Type type;
     std::any eval;
     bool isMutable;
     bool isGlobal;
+    unsigned long long ID;
 };
 
 class Scope final
@@ -72,9 +78,11 @@ class astNode final
 {
 public:
     ~astNode()=default;
+    // used in parser
     std::vector<astNode*> children;
     std::string value;
     astNodeType type;
+    // used in semantic check
     astNode* father;
     Type realType;
     std::any eval;
@@ -84,6 +92,11 @@ public:
     bool hasAbsoluteBreak=false;
     bool isMutable=false;
     bool isVariable=false;
+    // used in IR
+    std::string irResult;
+    unsigned long long variableID = 0;
+    std::vector<std::any> irCode;
+
     std::vector<std::string> showSelf() const;
     std::vector<std::string> showTree() const;
 };

@@ -1,6 +1,6 @@
 #include<bits/stdc++.h>
 #include"parser.h"
-#include"type.h"
+#include"ir.h"
 using namespace std;
 int main()
 {
@@ -15,10 +15,15 @@ int main()
     try
     {
         root=par.solve();
-        semanticCheckType(root);
+        semanticCheck(root);
+        auto irCode=generateIr(root);
         auto res=root->showTree();
         for (const auto& t:res)
+            std::cerr<<t<<std::endl;
+        std::cout<<std::endl;
+        for (const auto& t:irCode)
             std::cout<<t<<std::endl;
+        std::cout<<std::endl;
     }
     catch(...)
     {

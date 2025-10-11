@@ -185,6 +185,8 @@ std::vector<std::string> astNode::showSelf() const
     }
     if (isMutable)
         res.back().append(" mutable");
+    if (variableID)
+        res.back().append(" %"+std::to_string(variableID));
     if (!irResult.empty())
         res.back().append(" irResult:"+irResult);
     return res;

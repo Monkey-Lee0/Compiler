@@ -329,7 +329,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             deriveStrongTrans(T1, T0);
             if (!child->children[1]->eval.has_value())
                 throw compileError();
-            scopeInfo value = {T0, child->children[1]->eval, false, true, variableNum++};
+            scopeInfo value = {T0, child->children[1]->eval, false, true, ++variableNum};
             if (node->scope.first->getItem(child->value).isGlobal) // shadow
                 throw compileError();
             child->scope.first->setItem(child->value, value);
@@ -339,7 +339,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
         else if (child->type == astNodeType::FUNCTION)
         {
             child->children[0]->scope = child->scope;
-            child->scope.first->setItem("self", {UNIT, std::any(), false, false, variableNum++});
+            child->scope.first->setItem("self", {UNIT, std::any(), false, false, ++variableNum});
             updateSemanticState(child->children[0], nullptr, nullptr, nullptr);
             child->scope.first->itemTable.erase("self");
             child->children[1]->scope = child->scope;
@@ -364,10 +364,12 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                         throw compileError();
                     if (!has2)
                         child->scope.first->setItem(id->value, {T0, std::any(),
-                         false, false, variableNum++});
+                         false, false, ++variableNum});
                     else
                         child->scope.first->setItem(id->value, {T0, std::any(),
-                         true, false, variableNum++});
+                         true, false, ++variableNum});
+                    id->realType = T0;
+                    id->variableID = variableNum;
                     T.members.push_back(new Type(T0));
                 }
                 else if (i || SelfType == ILLEGAL)
@@ -386,17 +388,19 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                                 throw compileError();
                         }
                         child->scope.first->setItem("self", {T1,
-                            std::any(), false, false, variableNum++});
+                            std::any(), false, false, ++variableNum});
                     }
                     else if (has1 && !has2)
                         child->scope.first->setItem("self", {castRef(T1),
-                            std::any(), false, false, variableNum++});
+                            std::any(), false, false, ++variableNum});
                     else if (has1 && has2)
                         child->scope.first->setItem("self", {castMutRef(T1),
-                            std::any(), false, false, variableNum++});
+                            std::any(), false, false, ++variableNum});
                     else
                         child->scope.first->setItem("self", {T1,
-                            std::any(), true, false, variableNum++});
+                            std::any(), true, false, ++variableNum});
+                    id->realType = T1;
+                    id->variableID = variableNum;
                     T.name = TypeName::METHOD;
                     T.SelfPtr = &child->scope.first->getItem("self").type;
                 }
@@ -406,7 +410,8 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                 T.SelfPtr = &SelfType;
             }
             node->scope.first->setItem(child->value,
-                {T, std::any(), false, true, variableNum++});
+                {T, std::any(), false, true, ++variableNum});
+            child->variableID = variableNum;
         }
 
     // resolve struct dependency
@@ -424,14 +429,14 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                 for (auto id:child->children[0]->children)
                 {
                     auto T0=typeToItem(id->children[0]->realType);
-                    child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true, variableNum++});
+                    child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true, ++variableNum});
                 }
                 T->memberFieldNum = T->field->itemTable.size();
             }
             if (node->scope.first->getType(child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
-                , std::any(), false, true, variableNum++});
+                , std::any(), false, true, ++variableNum});
         }
     //resolve impl dependency
         else if (child->type == astNodeType::IMPL)
@@ -440,7 +445,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             if (T.name != TypeName::STRUCT)
                 throw compileError();
             child->scope = std::make_pair(T.field, node);
-            T.field->setType("Self", {itemToType(T), std::any(), false, false, variableNum++});
+            T.field->setType("Self", {itemToType(T), std::any(), false, false, ++variableNum});
             child->children[0]->scope = child->scope;
             resolveDependency(child->children[0], T);
         }
@@ -460,7 +465,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
             if (findScopeType(node->scope, child->value).isGlobal)
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
-                , std::any(), false, true, variableNum++});
+                , std::any(), false, true, ++variableNum});
         }
 }
 
@@ -532,6 +537,8 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         }
         scopeInfo value = {T0, std::any(),
             node->children[0]->value == "mut", false, ++variableNum};
+        node->realType = T0;
+        node->variableID = variableNum;
         if (findScopeItem(node->scope, node->value).isGlobal) // shadow a constant.
             throw compileError();
         if (node->value != "_")
@@ -539,8 +546,6 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
     }
     else if (node->type == astNodeType::STATEMENT_BLOCK)
     {
-        // TODO
-        // return value of statement block
         if (node->children.empty())
             node->realType = UNIT;
         else
@@ -576,8 +581,6 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         auto T = UNIT;
         if (!node->children.empty())
             T = node->children.back()->realType;
-
-
         if (fnPtr == nullptr)
             throw compileError();
         auto T1=typeToItem(fnPtr->children[1]->realType);
@@ -667,6 +670,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 throw compileError();
             deriveNumberType(T0, T1);
             node->realType = T0;
+            node->variableID = ++variableNum;
             if (E0.has_value() && E1.has_value())
             {
                 auto L1 = std::any_cast<long long>(E0), L2 = std::any_cast<long long>(E1);
@@ -692,6 +696,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             if (!isNumber(T0) && !isNumber(T1))
                 throw compileError();
             node->realType = T0;
+            node->variableID = ++variableNum;
             if (E0.has_value() && E1.has_value())
             {
                 auto L1 = std::any_cast<long long>(E0), L2 = std::any_cast<long long>(E1);
@@ -737,6 +742,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                         node->eval = L1 | L2;
                 }
             }
+            node->variableID = ++variableNum;
         }
         else if (node->value == "<" || node->value == ">" || node->value == "<=" || node->value == ">=")
         {
@@ -790,6 +796,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                         node->eval = L1 >= L2;
                 }
             }
+            node->variableID = ++variableNum;
         }
         else if (node->value == "==" || node->value == "!=")
         {
@@ -849,6 +856,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                         node->eval = L1 != L2;
                 }
             }
+            node->variableID = ++variableNum;
         }
         else if (node->value == "&&" || node->value == "||")
         {
@@ -867,6 +875,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 else if (node->value == "||")
                     node->eval = L1 || L2;
             }
+            node->variableID = ++variableNum;
         }
         else if (node->value == "=")
         {
@@ -912,6 +921,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 else if (T0 == BOOL)
                     node->eval = static_cast<long long>(std::any_cast<bool>(E0));
             }
+            node->variableID = ++variableNum;
         }
         else if (node->value == ".")
         {
@@ -1062,6 +1072,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         node->isVariable = true;
         node->eval = R.eval;
         node->realType = R.type;
+        node->variableID = R.ID;
         if (R.type.isExit && father->type == astNodeType::FUNCTION_CALL && father->curSonId == 0)
         {
             auto cur = father->father;
@@ -1295,6 +1306,8 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             deriveStrongTrans(T1, T0);
         }
         node->realType = *FT.typePtr;
+        if (node->realType != UNIT)
+            node->variableID = ++variableNum;
     }
     else if (node->type == astNodeType::STRUCT_BUILD)
     {

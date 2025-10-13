@@ -94,6 +94,7 @@ public:
     bool isVariable=false;
     // used in IR
     std::string irResult;
+    std::string irResultPtr;
     unsigned long long variableID = 0;
     std::vector<std::any> irCode;
 

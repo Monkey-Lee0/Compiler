@@ -76,10 +76,12 @@ void updateIrState(astNode* node)
             node->children[0]->irResult + ")";
         node->irCode.emplace_back(node->irResult);
         node->irCode.emplace_back(std::string("{"));
+        node->irCode.emplace_back(std::string("dent in"));
         node->irCode.emplace_back(&node->children[0]->irCode);
         node->irCode.emplace_back(&node->children[2]->irCode);
         if (node->children[2]->realType != NEVER)
             node->irCode.emplace_back(std::string("ret void"));
+        node->irCode.emplace_back(std::string("dent out"));
         node->irCode.emplace_back(std::string("}"));
     }
     else if (node->type == astNodeType::STATEMENT_BLOCK)
@@ -94,6 +96,7 @@ void updateIrState(astNode* node)
     else if (node->type == astNodeType::EXPRESSION_STATEMENT)
     {
         node->irCode.emplace_back(&node->children[0]->irCode);
+        node->irResult = node->children[0]->irResult;
     }
     else if (node->type == astNodeType::TYPE)
     {
@@ -123,7 +126,7 @@ void updateIrState(astNode* node)
     }
     else if (node->type == astNodeType::IF)
     {
-        if (node->children.size() == 2)
+        if (node->children.size() == 2) // if-only
         {
             node->irCode.emplace_back(&node->children[0]->irCode);
             if (node->children[0]->eval.has_value())
@@ -134,10 +137,133 @@ void updateIrState(astNode* node)
             }
             else
             {
-                node->irCode.emplace_back("dent out");
-                // node->irC
+                node->irCode.emplace_back("br i1 "+node->children[0]->irResult+", label %"+
+                    std::to_string(variableNum+1)+", label %"+std::to_string(variableNum+2));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+1)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                node->irCode.emplace_back(&node->children[1]->irCode);
+                node->irCode.emplace_back("br label %"+std::to_string(variableNum+2));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+2)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                variableNum+=2;
             }
         }
+        else // if-else
+        {
+            node->irCode.emplace_back(&node->children[0]->irCode);
+            if (node->children[0]->eval.has_value())
+            {
+                auto cond=std::any_cast<bool>(node->children[0]->eval);
+                if (cond)
+                    node->irCode.emplace_back(&node->children[1]->irCode);
+                else
+                    node->irCode.emplace_back(&node->children[2]->irCode);
+            }
+            else
+            {
+                node->irCode.emplace_back("br i1 "+node->children[0]->irResult+", label %"+
+                    std::to_string(variableNum+1)+", label %"+std::to_string(variableNum+2));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+1)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                node->irCode.emplace_back(&node->children[1]->irCode);
+                node->irCode.emplace_back("br label %"+std::to_string(variableNum+3));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+2)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                node->irCode.emplace_back(&node->children[2]->irCode);
+                node->irCode.emplace_back("br label %"+std::to_string(variableNum+3));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+3)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                variableNum+=3;
+            }
+        }
+    }
+    else if (node->type == astNodeType::ELSE)
+    {
+        node->irCode.emplace_back(&node->children[0]->irCode);
+    }
+    else if (node->type == astNodeType::WHILE)
+    {
+        if (node->children[0]->eval.has_value())
+        {
+            auto cond=std::any_cast<bool>(node->children[0]->eval);
+            if (cond)
+            {
+                node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+1)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+                node->irCode.emplace_back(&node->children[1]->irCode);
+                node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+                node->irCode.emplace_back(std::string("empty line"));
+                node->irCode.emplace_back(std::string("dent out"));
+                node->irCode.emplace_back(std::to_string(variableNum+2)+":");
+                node->irCode.emplace_back(std::string("dent in"));
+
+                variableNum+=2;
+            }
+        }
+        else
+        {
+            node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+            node->irCode.emplace_back(std::string("empty line"));
+            node->irCode.emplace_back(std::string("dent out"));
+            node->irCode.emplace_back(std::to_string(variableNum+1)+":");
+            node->irCode.emplace_back(std::string("dent in"));
+            node->irCode.emplace_back(&node->children[0]->irCode);
+            node->irCode.emplace_back("br i1 "+node->children[0]->irResult+", label %"+
+                    std::to_string(variableNum+2)+", label %"+std::to_string(variableNum+3));
+
+            node->irCode.emplace_back(std::string("empty line"));
+            node->irCode.emplace_back(std::string("dent out"));
+            node->irCode.emplace_back(std::to_string(variableNum+2)+":");
+            node->irCode.emplace_back(std::string("dent in"));
+            node->irCode.emplace_back(&node->children[1]->irCode);
+            node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+            node->irCode.emplace_back(std::string("empty line"));
+            node->irCode.emplace_back(std::string("dent out"));
+            node->irCode.emplace_back(std::to_string(variableNum+3)+":");
+            node->irCode.emplace_back(std::string("dent in"));
+            variableNum+=3;
+        }
+    }
+    else if (node->type == astNodeType::LOOP)
+    {
+        node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+        node->irCode.emplace_back(std::string("empty line"));
+        node->irCode.emplace_back(std::string("dent out"));
+        node->irCode.emplace_back(std::to_string(variableNum+1)+":");
+        node->irCode.emplace_back(std::string("dent in"));
+        node->irCode.emplace_back(&node->children[0]->irCode);
+        node->irCode.emplace_back("br label %"+std::to_string(variableNum+1));
+
+        node->irCode.emplace_back(std::string("empty line"));
+        node->irCode.emplace_back(std::string("dent out"));
+        node->irCode.emplace_back(std::to_string(variableNum+2)+":");
+        node->irCode.emplace_back(std::string("dent in"));
+
+        variableNum+=2;
+
     }
     else if (node->type == astNodeType::LET_STATEMENT)
     {
@@ -157,8 +283,19 @@ void updateIrState(astNode* node)
         if (node->value == "=")
         {
             node->irResult = "()";
-            node->irCode.emplace_back("store "+typeToIrString(node->children[1]->realType)+" "+
-                node->children[1]->irResult+", ptr "+node->children[0]->irResult);
+            node->irCode.emplace_back("store "+typeToIrString(node->children[0]->realType)+" "+
+                node->children[1]->irResult+", ptr "+node->children[0]->irResultPtr);
+        }
+        else if (node->value == "+=" || node->value == "-=" || node->value == "*=" ||node->value == "/=" ||
+                node->value == "%=" ||node->value == "<<=" || node->value == ">>=" || node->value =="&=" ||
+                node->value == "^=" || node->value == "|=")
+        {
+            node->irResult = "()";
+            node->irCode.emplace_back("%"+std::to_string(++variableNum)+" = "+
+                opeToIrString(node->value.substr(0,node->value.size()-1))+" "+
+                typeToIrString(node->children[0]->realType)+" "+node->children[0]->irResult+", "+node->children[1]->irResult);
+            node->irCode.emplace_back("store "+typeToIrString(node->children[1]->realType)+" %"+
+                std::to_string(variableNum)+", ptr "+node->children[0]->irResultPtr);
         }
         else
         {
@@ -206,17 +343,11 @@ void updateIrState(astNode* node)
     {
         if (node->realType.name != TypeName::TYPE)
         {
-            if (node->father->value == "=")
-            {
-                node->irResult = "%"+std::to_string(node->variableID);
-            }
-            else
-            {
-                node->irResult = "%"+std::to_string(++variableNum);
-                node->irCode.emplace_back(node->irResult+" = load "+
-                    typeToIrString(node->realType)+
-                    +", ptr %"+std::to_string(node->variableID));
-            }
+            node->irResult = "%"+std::to_string(++variableNum);
+            node->irCode.emplace_back(node->irResult+" = load "+
+                typeToIrString(node->realType)+
+                +", ptr %"+std::to_string(node->variableID));
+            node->irResultPtr = "%"+std::to_string(node->variableID);
         }
     }
     else if (node->type == astNodeType::RETURN_CUR)
@@ -233,7 +364,7 @@ std::string setDent(const int &num)
     return res;
 }
 
-std::vector<std::string> integrateCode(const std::vector<std::any> &code, int dent=0)
+std::vector<std::string> integrateCode(const std::vector<std::any> &code, int &dent)
 {
     std::vector<std::string> res;
     for (auto ele: code)
@@ -244,21 +375,17 @@ std::vector<std::string> integrateCode(const std::vector<std::any> &code, int de
             if (str == "dent in")
                 dent += 2;
             else if (str == "dent out")
-                dent-=2;
+                dent -= 2;
+            else if (str == "empty line")
+                res.emplace_back("");
             else
-            {
-                if (str == "}")
-                    dent -= 2;
                 res.push_back(setDent(dent)+str);
-                if (str == "{")
-                    dent += 2;
-            }
         }
         else
         {
-            auto extend = integrateCode(*std::any_cast<std::vector<std::any>*>(ele));
+            auto extend = integrateCode(*std::any_cast<std::vector<std::any>*>(ele), dent);
             for (const auto& str:extend)
-                res.push_back(setDent(dent)+str);
+                res.push_back(str);
         }
     }
     return res;
@@ -268,5 +395,6 @@ std::vector<std::string> generateIr(astNode* node)
 {
     updateIrState(node);
     // return {};
-    return integrateCode(node->irCode);
+    int dent = 0;
+    return integrateCode(node->irCode, dent);
 }

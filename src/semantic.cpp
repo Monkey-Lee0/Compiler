@@ -887,7 +887,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             node->realType = UNIT;
         }
         else if (node->value == "+=" || node->value == "-=" || node->value == "*=" || node->value == "/=" ||
-            node->value == "%=" || node->value == "<<=" || node->value == ">>")
+            node->value == "%=" || node->value == "<<=" || node->value == ">>=")
         {
             if (T1.name == TypeName::REF)
                 T1 = *T1.typePtr;

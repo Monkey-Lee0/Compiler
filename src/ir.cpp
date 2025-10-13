@@ -23,6 +23,35 @@ std::string opeToIrString(const std::string &ope)
         return "xor";
     if (ope == "|")
         return "or";
+    if (ope == "==")
+        return "eq";
+    if (ope == "!=")
+        return "ne";
+    if (ope == ">")
+        return "sgt";
+    if (ope == ">=")
+        return "sge";
+    if (ope == "<")
+        return "slt";
+    if (ope == "<=")
+        return "sle";
+    return "illegal";
+}
+
+std::string opeToIrStringU(const std::string &ope)
+{
+    if (ope == "==")
+        return "eq";
+    if (ope == "!=")
+        return "ne";
+    if (ope == ">")
+        return "ugt";
+    if (ope == ">=")
+        return "uge";
+    if (ope == "<")
+        return "ult";
+    if (ope == "<=")
+        return "ule";
     return "illegal";
 }
 
@@ -30,7 +59,8 @@ std::string typeToIrString(Type type)
 {
     if (type.name == TypeName::TYPE)
         type = typeToItem(type);
-    if (type == I32 || type == U32 || type == ISIZE || type == USIZE || type == IINT || type == UINT || type == INT)
+    if (type == I32 || type == U32 || type == ISIZE || type == USIZE || type == IINT || type == UINT || type == INT ||
+        type.name == TypeName::ENUM)
         return "i32";
     if (type == CHAR)
         return "i8";
@@ -397,7 +427,22 @@ void updateIrState(astNode* node)
             node->irCode.emplace_back(node->irResult+" = phi i1 [ "+node->children[0]->irResult+", "+
                 node->fnPtr->irResultLabel1+" ], [ "+node->children[1]->irResult+", "+
                 node->irResultLabel1+" ]");
-
+        }
+        else if (node->value == "==" || node->value == "!=" || node->value == "<" ||
+            node->value == "<=" || node->value == ">" || node->value == ">=")
+        {
+            node->irCode.emplace_back(&node->children[0]->irCode);
+            node->irCode.emplace_back(&node->children[1]->irCode);
+            node->irResult = "%"+std::to_string(++variableNum);
+            if (node->children[0]->realType == U32 || node->children[0]->realType == USIZE ||
+                node->children[0]->realType == UINT)
+                node->irCode.emplace_back(node->irResult+" = icmp "+opeToIrStringU(node->value)+" "+
+                    typeToIrString(node->children[0]->realType)+" "+node->children[0]->irResult+", "+
+                    node->children[1]->irResult);
+            else
+                node->irCode.emplace_back(node->irResult+" = icmp "+opeToIrString(node->value)+" "+
+                    typeToIrString(node->children[0]->realType)+" "+node->children[0]->irResult+", "+
+                    node->children[1]->irResult);
         }
         else
         {
@@ -505,10 +550,28 @@ std::vector<std::string> integrateCode(const std::vector<std::any> &code, int &d
     return res;
 }
 
+std::vector<std::string> trimString(const std::vector<std::string> &code)
+{
+    std::vector<std::string> res;
+    int lasLabel=0;
+    for (int i=0;i<code.size();i++)
+    {
+        if (code[i].empty())
+            continue;
+        if (code[i] == "}")
+            res.push_back(code[i]), lasLabel = i+1;
+        else if (code[i].back() == ':')
+            lasLabel = i;
+        else
+            while (lasLabel<=i)
+                res.push_back(code[lasLabel]), lasLabel++;
+    }
+    return res;
+}
+
 std::vector<std::string> generateIr(astNode* node)
 {
     updateIrState(node);
-    // return {};
     int dent = 0;
-    return integrateCode(node->irCode, dent);
+    return trimString(integrateCode(node->irCode, dent));
 }

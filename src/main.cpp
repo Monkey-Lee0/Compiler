@@ -25,6 +25,10 @@ int main()
             std::cout<<t<<std::endl;
         std::cout<<std::endl;
     }
+    catch (std::bad_any_cast&)
+    {
+        std::cout<<"Bad any cast!"<<std::endl;
+    }
     catch(...)
     {
         std::cout<<"Compile Error!"<<std::endl;

@@ -564,7 +564,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             }
             for (int i=0; i+1 < node->children.size(); i++)
                 if (node->children[i]->type == astNodeType::RETURN_CUR &&
-                    node->children[i]->realType != UNIT)
+                    node->children[i]->realType != UNIT && node->children[i]->realType != NEVER)
                     throw compileError();
         }
     }

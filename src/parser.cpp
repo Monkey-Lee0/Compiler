@@ -706,7 +706,12 @@ astNode* parser::parseExp(const int precedence, const bool firstFlag = false)
             break;
         }
         if (isItem(prefix))
+        {
+            if (prefix == (token){tokenType::KEYWORD, "continue"} &&
+                (isItem(src.peek()) || isPrefixOperator(src.peek()) || isItem(src.peek())))
+                throw compileError();
             break;
+        }
         throw compileError();
     }
 

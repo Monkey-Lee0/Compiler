@@ -36,7 +36,7 @@ TEST(Parser, LOOP1){EXPECT_NO_THROW(runParser("loop1.in"));}
 TEST(Parser, LOOP2){EXPECT_NO_THROW(runParser("loop2.in"));}
 TEST(Parser, LOOP3){EXPECT_NO_THROW(runParser("loop3.in"));}
 TEST(Parser, LOOP4){EXPECT_NO_THROW(runParser("loop4.in"));}
-TEST(Parser, LOOP5){EXPECT_NO_THROW(runParser("loop5.in"));}
+TEST(Parser, LOOP5){EXPECT_ANY_THROW(runParser("loop5.in"));}
 TEST(Parser, LOOP6){EXPECT_NO_THROW(runParser("loop6.in"));}
 TEST(Parser, TYPE1){EXPECT_NO_THROW(runParser("type1.in"));}
 TEST(Parser, TYPE2){EXPECT_NO_THROW(runParser("type2.in"));}

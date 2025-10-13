@@ -485,7 +485,10 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
     if (node->type == astNodeType::WHILE || node->type == astNodeType::LOOP)
         loopPtr = node;
     if (node->type == astNodeType::FUNCTION)
-        fnPtr = node;
+        fnPtr = node, loopPtr = nullptr;
+
+    node->loopPtr = loopPtr;
+    node->fnPtr = fnPtr;
 
     if (node->type == astNodeType::BINARY_OPERATOR && (node->value == "." || node->value == "::"))
         updateSemanticState(node->children[0], node, father, loopPtr);

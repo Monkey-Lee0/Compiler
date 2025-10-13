@@ -95,6 +95,10 @@ public:
     // used in IR
     std::string irResult;
     std::string irResultPtr;
+    std::string irResultLabel1;
+    std::string irResultLabel2;
+    astNode* loopPtr;
+    astNode* fnPtr;
     unsigned long long variableID = 0;
     std::vector<std::any> irCode;
 

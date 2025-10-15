@@ -29,7 +29,11 @@ int main()
     {
         std::cout<<"Bad any cast!"<<std::endl;
     }
-    catch(...)
+    catch (std::bad_alloc&)
+    {
+        std::cout<<"Bad alloc!"<<std::endl;
+    }
+    catch (compileError&)
     {
         std::cout<<"Compile Error!"<<std::endl;
     }

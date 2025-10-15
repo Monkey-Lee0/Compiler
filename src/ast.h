@@ -16,7 +16,6 @@ enum class TypeName
 
 class Scope;
 
-inline unsigned int structNum = 0;
 class Type final
 {
 public:
@@ -30,7 +29,6 @@ public:
     std::vector<Type const*> members;
     std::unordered_map<std::string, unsigned int>* memberNames;
     Scope* field = nullptr;
-    unsigned int memberFieldNum = 0;
     [[nodiscard]] std::string to_string() const;
     Type();
     explicit Type(const TypeName&);
@@ -95,6 +93,7 @@ public:
     // used in IR
     std::string irResult;
     std::string irResultPtr;
+    astNode* selfPtr;
     std::string irResultLabel1;
     std::string irResultLabel2;
     astNode* loopPtr;

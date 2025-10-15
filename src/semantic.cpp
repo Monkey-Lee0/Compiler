@@ -418,9 +418,10 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
         else if (child->type == astNodeType::STRUCT)
         {
             auto T=new Type(TypeName::STRUCT);
-            T->structID = ++structNum;
+            T->structID = ++variableNum;
             T->structName = child->value;
             T->field = new Scope();
+            T->memberNames = new std::unordered_map<std::string, unsigned int>();
             child->scope = std::make_pair(T->field, node);
             if (!child->children.empty())
             {
@@ -428,15 +429,17 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                 updateSemanticState(child->children[0], nullptr, nullptr, nullptr);
                 for (auto id:child->children[0]->children)
                 {
-                    auto T0=typeToItem(id->children[0]->realType);
+                    auto &T0=typeToItem(id->children[0]->realType);
                     child->scope.first->setItem("-"+id->value, {T0, std::any(), true, true, ++variableNum});
+                    T->memberNames->emplace(id->value, T->members.size());
+                    T->members.emplace_back(&T0);
                 }
-                T->memberFieldNum = T->field->itemTable.size();
             }
             if (node->scope.first->getType(child->value).isGlobal) // shadow
                 throw compileError();
             node->scope.first->setType(child->value, {itemToType(T)
-                , std::any(), false, true, ++variableNum});
+                , std::any(), false, true, T->structID});
+            child->realType = itemToType(T);
         }
     //resolve impl dependency
         else if (child->type == astNodeType::IMPL)
@@ -453,7 +456,7 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
         else if (child->type == astNodeType::ENUM)
         {
             auto T=new Type(TypeName::ENUM);
-            T->structID = ++structNum;
+            T->structID = ++variableNum;
             T->structName = child->value;
             T->memberNames = new std::unordered_map<std::string, unsigned int>();
             for (int i=0; i<child->children.size(); i++)
@@ -961,6 +964,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                         throw compileError();
                     T0.type.name = TypeName::FUNCTION;
                     T0.type.SelfPtr = nullptr;
+                    node->variableID = T0.ID;
                 }
                 node->realType = T0.type;
                 node->isMutable &= T0.isMutable;
@@ -991,6 +995,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 node->realType = T0.type;
                 node->isVariable = node->children[1]->isVariable;
                 node->eval = T0.eval;
+                node->variableID = T0.ID;
             }
             else
             {
@@ -1328,7 +1333,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         }
         std::ranges::sort(Name);
         Name.erase(std::ranges::unique(Name).begin(), Name.end());
-        if (Name.size() != T0->memberFieldNum ||
+        if (Name.size() != T0->members.size() ||
             Name.size() != node->children[1]->children.size())
             throw compileError();
         node->realType = *T0;

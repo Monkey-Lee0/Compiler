@@ -5,6 +5,7 @@ using namespace std;
 int main()
 {
     freopen("my.in","r",stdin);
+    freopen("my.ll","w",stdout);
     int in;
     string code;
     while((in=cin.get())!=EOF)

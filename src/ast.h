@@ -102,7 +102,6 @@ public:
     unsigned long long variableID = 0;
     std::vector<std::any> irCode;
     std::vector<std::any> irCodeStruct;
-    std::vector<std::any> irCodeDeclare;
     std::vector<std::string> showSelf() const;
     std::vector<std::string> showTree() const;
 };

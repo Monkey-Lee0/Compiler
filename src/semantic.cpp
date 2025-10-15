@@ -669,9 +669,9 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             node->value == "%")
         {
             if (T0.name == TypeName::REF)
-                T0 = *T0.typePtr;
+                T0 = *T0.typePtr, node->children[0]->autoDerefCount ++;
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (!isNumber(T0))
                 throw compileError();
             deriveNumberType(T0, T1);
@@ -696,9 +696,9 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         else if (node->value == "<<" || node->value == ">>")
         {
             if (T0.name == TypeName::REF)
-                T0 = *T0.typePtr;
+                T0 = *T0.typePtr, node->children[0]->autoDerefCount ++;
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (!isNumber(T0) && !isNumber(T1))
                 throw compileError();
             node->realType = T0;
@@ -716,9 +716,9 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         else if (node->value == "&" || node->value == "^" || node->value == "|")
         {
             if (T0.name == TypeName::REF)
-                T0 = *T0.typePtr;
+                T0 = *T0.typePtr, node->children[0]->autoDerefCount ++;
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (T0 == BOOL && T1 == BOOL)
             {
                 node->realType = T0;
@@ -754,7 +754,11 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         {
             while ((T0.name == TypeName::REF || T0.name == TypeName::MUT_REF)&&
                 (T1.name == TypeName::REF || T1.name == TypeName::MUT_REF))
+            {
                 T0 = *T0.typePtr, T1 = *T1.typePtr;
+                node->children[0]->autoDerefCount ++;
+                node->children[1]->autoDerefCount ++;
+            }
             node->realType = BOOL;
             if (T0 == CHAR && T1 == CHAR)
             {
@@ -808,7 +812,11 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         {
             while ((T0.name == TypeName::REF || T0.name == TypeName::MUT_REF)&&
                 (T1.name == TypeName::REF || T1.name == TypeName::MUT_REF))
+            {
                 T0 = *T0.typePtr, T1 = *T1.typePtr;
+                node->children[0]->autoDerefCount ++;
+                node->children[1]->autoDerefCount ++;
+            }
             node->realType = BOOL;
             if (T0 == CHAR && T1 == CHAR)
             {
@@ -867,9 +875,9 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         else if (node->value == "&&" || node->value == "||")
         {
             if (T0.name == TypeName::REF)
-                T0 = *T0.typePtr;
+                T0 = *T0.typePtr, node->children[0]->autoDerefCount ++;
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (T0 != T1 || T0 != BOOL)
                 throw compileError();
             node->realType = BOOL;
@@ -896,7 +904,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             node->value == "%=" || node->value == "<<=" || node->value == ">>=")
         {
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (!node->children[0]->isMutable)
                 throw compileError();
             deriveNumberType(T0, T1);
@@ -905,7 +913,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         else if (node->value == "&=" || node->value == "^=" || node->value == "|=")
         {
             if (T1.name == TypeName::REF)
-                T1 = *T1.typePtr;
+                T1 = *T1.typePtr, node->children[1]->autoDerefCount ++;
             if (!node->children[0]->isMutable)
                 throw compileError();
             deriveAllType(T0, T1);
@@ -941,6 +949,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 else
                     node->isMutable = true;
                 T = *T.typePtr;
+                node->children[0]->autoDerefCount ++;
             }
             if (T.name == TypeName::ARRAY && node->children[1]->value == "len") // .len
                 node->realType = {TypeName::FUNCTION, &USIZE, 0};
@@ -976,7 +985,10 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         {
             auto T=node->children[0]->realType;
             while (T.name == TypeName::REF || T.name == TypeName::MUT_REF)
+            {
                 T = *T.typePtr;
+                node->children[0]->autoDerefCount ++;
+            }
             if (T.name != TypeName::TYPE || (T.typePtr->name != TypeName::STRUCT &&
                 T.typePtr->name != TypeName::ENUM))
                 throw compileError();
@@ -1287,6 +1299,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
             else
                 node->isMutable = true;
             T0 = *T0.typePtr;
+            node->children[0]->autoDerefCount ++;
         }
         if (T0.name != TypeName::ARRAY || (T1 != USIZE && T1 != UINT && T1 != INT))
             throw compileError();

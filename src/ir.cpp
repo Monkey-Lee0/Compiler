@@ -720,6 +720,15 @@ void updateIrState(astNode* node, astNode* root)
     {
         node->irResult = typeToIrString(node->realType)+" %"+std::to_string(node->variableID);
     }
+
+    // solve auto deref;
+    for (int t=0; t<node->autoDerefCount; t++)
+    {
+        node->irResultPtr = node->irResult;
+        node->irResult = "%"+std::to_string(++variableNum);
+        node->realType = *node->realType.typePtr;
+        node->irCode.emplace_back(node->irResult+" = load "+typeToIrString(node->realType)+", ptr "+node->irResultPtr);
+    }
 }
 
 std::string setDent(const int &num)

@@ -91,6 +91,7 @@ public:
     bool isMutable=false;
     bool isVariable=false;
     // used in IR
+    unsigned int autoDerefCount = 0;
     std::string irResult;
     std::string irResultPtr;
     astNode* selfPtr;

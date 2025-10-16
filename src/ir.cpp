@@ -117,7 +117,6 @@ void updateIrState(astNode* node, astNode* root)
     {
         node->irResultLabel1 = "%v"+std::to_string(++variableNum);
         node->irResultLabel2 = "%v"+std::to_string(++variableNum);
-        node->fnPtr->irResultLabel1 = node->irResultLabel1;
         if (node->type == astNodeType::LOOP)
         {
             node->irResultPtr = "%v"+std::to_string(++variableNum);
@@ -161,9 +160,19 @@ void updateIrState(astNode* node, astNode* root)
     }
     else if (node->type == astNodeType::FUNCTION)
     {
-        node->irResult = "define " + node->children[1]->irResult + (node->variableID==1?" @main":" @f" +
-            std::to_string(node->variableID)) + "(" +
-            node->children[0]->irResult + ")";
+        if (node->variableID == 1)
+            node->irResult = "define " + node->children[1]->irResult + " @main("+node->children[0]->irResult + ")";
+        else if (node->variableID == 2)
+            node->irResult = "define " + node->children[1]->irResult + " @exit("+node->children[0]->irResult + ")";
+        else if (node->variableID == 3)
+            node->irResult = "define " + node->children[1]->irResult + " @printInt("+node->children[0]->irResult + ")";
+        else if (node->variableID == 4)
+            node->irResult = "define " + node->children[1]->irResult + " @printlnInt("+node->children[0]->irResult + ")";
+        else if (node->variableID == 5)
+            node->irResult = "define " + node->children[1]->irResult + " @getInt("+node->children[0]->irResult + ")";
+        else
+            node->irResult = "define " + node->children[1]->irResult + " @f" +
+                std::to_string(node->variableID) + "(" + node->children[0]->irResult + ")";
         node->irCode.emplace_back(node->irResult);
         node->irCode.emplace_back(std::string("{"));
         node->irCode.emplace_back(node->irResultLabel1.substr(1)+":");
@@ -596,6 +605,12 @@ void updateIrState(astNode* node, astNode* root)
                 node->irResult = "%v"+std::to_string(++variableNum);
                 node->irCode.emplace_back(node->irResult+" = zext i8 "+node->children[0]->irResult+" to i32");
             }
+            else if (node->children[0]->realType == BOOL && (T == INT || T == UINT || T == IINT ||
+                T == I32 || T == U32 || T == ISIZE || T == USIZE))
+            {
+                node->irResult = "%v"+std::to_string(++variableNum);
+                node->irCode.emplace_back(node->irResult+" = zext i1 "+node->children[0]->irResult+" to i32");
+            }
             else
                 node->irResult = node->children[0]->irResult;
         }
@@ -672,14 +687,12 @@ void updateIrState(astNode* node, astNode* root)
         {
             node->irResult = "%v"+std::to_string(node->variableID);
             node->irCode.emplace_back(node->irResult+" = call "+
-                typeToIrString(node->realType)+" @f"+std::to_string(node->children[0]->variableID)+
-                "("+groupResult+")");
+                typeToIrString(node->realType)+" "+node->children[0]->irResult+"("+groupResult+")");
         }
         else
         {
             node->irResult = "()";
-            node->irCode.emplace_back("call void @f"+std::to_string(node->children[0]->variableID)+
-                "("+groupResult+")");
+            node->irCode.emplace_back("call void "+node->children[0]->irResult+"("+groupResult+")");
         }
     }
     else if (node->type == astNodeType::IDENTIFIER)
@@ -694,6 +707,14 @@ void updateIrState(astNode* node, astNode* root)
         {
             if (node->variableID == 1)
                 node->irResult = "@main";
+            else if (node->variableID == 2)
+                node->irResult = "@exit";
+            else if (node->variableID == 3)
+                node->irResult = "@printInt";
+            else if (node->variableID == 4)
+                node->irResult = "@printlnInt";
+            else if (node->variableID == 5)
+                node->irResult = "@getInt";
             else
                 node->irResult = "@f"+std::to_string(node->variableID);
         }
@@ -867,13 +888,44 @@ std::vector<std::string> trimString(const std::vector<std::string> &code)
     return res;
 }
 
+std::vector<std::any> loadBuiltinIr()
+{
+    std::vector<std::any> res;
+    res.emplace_back(std::string("@.str = private unnamed_addr constant [3 x i8] c\"%d\\00\", align 1"));
+    res.emplace_back(std::string("@.str.1 = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\", align 1"));
+    res.emplace_back(std::string("define dso_local void @printInt(i32 noundef %x) local_unnamed_addr {"));
+    res.emplace_back(std::string("entry:"));
+    res.emplace_back(std::string("  %call = tail call noundef i32 (ptr, ...) @printf(ptr noundef nonnull @.str, i32 noundef %x)"));
+    res.emplace_back(std::string("  ret void"));
+    res.emplace_back(std::string("}"));
+    res.emplace_back(std::string("declare noundef i32 @printf(ptr noundef, ...) local_unnamed_addr"));
+    res.emplace_back(std::string("define dso_local void @printlnInt(i32 noundef %x) local_unnamed_addr {"));
+    res.emplace_back(std::string("entry:"));
+    res.emplace_back(std::string("  %call = tail call noundef i32 (ptr, ...) @printf(ptr noundef nonnull @.str.1, i32 noundef %x)"));
+    res.emplace_back(std::string("  ret void"));
+    res.emplace_back(std::string("}"));
+    res.emplace_back(std::string("define dso_local void @getInt(i32 noundef %x) local_unnamed_addr {"));
+    res.emplace_back(std::string("entry:"));
+    res.emplace_back(std::string("  %x.addr = alloca i32, align 4"));
+    res.emplace_back(std::string("  store i32 %x, ptr %x.addr, align 4"));
+    res.emplace_back(std::string("  %call = call noundef i32 (ptr, ...) @scanf(ptr noundef nonnull @.str, ptr noundef nonnull %x.addr)"));
+    res.emplace_back(std::string("  ret void"));
+    res.emplace_back(std::string("}"));
+    res.emplace_back(std::string("declare noundef i32 @scanf(ptr noundef, ...) local_unnamed_addr"));
+    res.emplace_back(std::string("declare void @exit(i32 noundef) local_unnamed_addr"));
+    return res;
+}
+
 std::vector<std::string> generateIr(astNode* node)
 {
     updateIrState(node, node);
     int dent = 0;
+    auto res = loadBuiltinIr();
     if (!node->irCodeStruct.empty())
         node->irCodeStruct.emplace_back(std::string("empty line"));
+    for (const auto& ele:node->irCodeStruct)
+        res.emplace_back(ele);
     for (const auto& ele:node->irCode)
-        node->irCodeStruct.emplace_back(ele);
-    return trimString(integrateCode(node->irCodeStruct, dent));
+        res.emplace_back(ele);
+    return trimString(integrateCode(res, dent));
 }

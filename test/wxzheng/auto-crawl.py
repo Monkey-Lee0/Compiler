@@ -43,6 +43,8 @@ for jf in Path(".").rglob("testcase_info.json"):
 
     rel_path = jf.parent.relative_to(".")          # a/b
     suite = rel_path.parts[0].replace("-", "")     # semantic-1 -> semantic1
+    if suite[0:2]== "IR":
+        continue
     case  = rel_path.name
     code  = data.get("compileexitcode", 0)
     inp   = f"{case}.in"
@@ -51,9 +53,16 @@ for jf in Path(".").rglob("testcase_info.json"):
     blocks[jf] = f"TEST({suite}, {case}) {{\n" \
                  f"    {expect}(runSemantic(\"{inp}\"));\n" \
                  f"}}"
+
+    if code == 0:
+        blocks[jf] += f"\nTEST(IR, {case}) {{\n" \
+                      f"    {expect}(runIr(\"{inp}\"));\n" \
+                      f"}}"
 OUT_CPP.write_text(R"""#include "../../src/parser.h"
-#include "../../src/type.h"
+#include "../../src/semantic.h"
+#include "../../src/ir.h"
 #include<iostream>
+#include<fstream>
 #include <gtest/gtest.h>
 
 std::string openFile(std::string path)
@@ -73,8 +82,25 @@ std::string openFile(std::string path)
 void runSemantic(std::string path)
 {
     const auto code=openFile(path);
-    semanticCheckType(parser(code).solve());
+    semanticCheck(parser(code).solve());
 }
+
+void runIr(std::string path)
+{
+    const auto code=openFile(path);
+    auto node=parser(code).solve();
+    semanticCheck(node);
+    std::fstream fs("my.ll", std::ios::out);
+    auto irCode=generateIr(node);
+    for (const auto& t:irCode)
+        fs<<t<<std::endl;
+    fs<<std::endl;
+    auto cl=system("clang -S --target=riscv32-unknown-elf -march=rv32gc -mabi=ilp32d"\
+                   " -O0 my.ll -o my.s");
+    if (cl)
+        throw compileError();
+}
+
 """
 +("\n".join(blocks.values())), encoding="utf8")
 print(f">>> 已生成 {OUT_CPP}  （共 {len(blocks)} 条 TEST）")

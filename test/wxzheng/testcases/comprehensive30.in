@@ -89,6 +89,7 @@ fn main() {
     }
 
     printlnInt(9999);
+    exit(0);
 }
 
 fn init_heap(heap: &mut [i32; HEAP_SIZE], free_list_head: &mut i32) {

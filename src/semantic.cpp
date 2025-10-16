@@ -971,7 +971,6 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 {
                     if (T0.type.selfMutable && !node->isMutable && node->isVariable)
                         throw compileError();
-                    std::cerr<<*T0.type.SelfPtr<<std::endl;
                     if (T0.type.SelfPtr->name == TypeName::REF || T0.type.SelfPtr->name == TypeName::MUT_REF)
                         node->children[0]->autoDerefCount --;
                     T0.type.name = TypeName::FUNCTION;
@@ -1372,10 +1371,10 @@ void loadBuiltinSemantic(astNode* node)
     auto T = (Type){TypeName::FUNCTION, &UNIT, 0};
     T.members.push_back(&I32);
     T.isExit = true;
-    node->scope.first->setItem("exit", {T, std::any(), false, true, 0});
+    node->scope.first->setItem("exit", {T, std::any(), false, true, 2});
     T.isExit = false;
-    node->scope.first->setItem("printInt", {T, std::any(), false, true, 0});
-    node->scope.first->setItem("printlnInt", {T, std::any(), false, true, 0});
+    node->scope.first->setItem("printInt", {T, std::any(), false, true, 3});
+    node->scope.first->setItem("printlnInt", {T, std::any(), false, true, 4});
 
     T.members.back() = &REF_STR;
     node->scope.first->setItem("print", {T, std::any(), false, true, 0});
@@ -1383,14 +1382,17 @@ void loadBuiltinSemantic(astNode* node)
 
     T.typePtr = &I32;
     T.members.clear();
-    node->scope.first->setItem("getInt", {T, std::any(), false, true, 0});
+    node->scope.first->setItem("getInt", {T, std::any(), false, true, 5});
 
     T.typePtr = &STRING;
     node->scope.first->setItem("getString", {T, std::any(), false, true, 0});
+
+    variableNum = 5;
 }
 
 void semanticCheck(astNode* node)
 {
+    variableNum = 1;
     loadBuiltinSemantic(node);
     updateSemanticState(node, nullptr, nullptr, nullptr);
 }

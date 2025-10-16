@@ -19,7 +19,9 @@ add_executable(wxzheng test.cpp
         ../../src/parser.h
         ../../src/ast.cpp
         ../../src/semantic.cpp
-        ../../src/semantic.h)
+        ../../src/semantic.h
+        ../../src/ir.h
+        ../../src/ir.cpp)
 
 # 3.3 链接被测库 + gtest
 target_link_libraries(wxzheng

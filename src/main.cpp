@@ -24,7 +24,6 @@ int main()
         std::cout<<std::endl;
         for (const auto& t:irCode)
             std::cout<<t<<std::endl;
-        std::cout<<std::endl;
     }
     catch (std::bad_any_cast&)
     {
@@ -38,6 +37,8 @@ int main()
     {
         std::cout<<"Compile Error!"<<std::endl;
     }
+    auto cl=system("clang -S --target=riscv32-unknown-elf -march=rv32gc -mabi=ilp32d -O0 my.ll -o my.s");
+    std::cerr<<"clang check result: "<<cl<<std::endl;
 
     return 0;
 }

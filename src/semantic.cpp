@@ -387,31 +387,31 @@ void resolveDependency(astNode* node, Type& SelfType = ILLEGAL)
                             if (T0 != T1)
                                 throw compileError();
                         }
-                        child->scope.first->setItem("self", {T1,
+                        child->scope.first->setItem("self", {id->realType = T1,
                             std::any(), false, false, ++variableNum});
                     }
                     else if (has1 && !has2)
-                        child->scope.first->setItem("self", {castRef(T1),
+                        child->scope.first->setItem("self", {id->realType = castRef(T1),
                             std::any(), false, false, ++variableNum});
                     else if (has1 && has2)
-                        child->scope.first->setItem("self", {castMutRef(T1),
+                        child->scope.first->setItem("self", {id->realType = castMutRef(T1),
                             std::any(), false, false, ++variableNum});
                     else
-                        child->scope.first->setItem("self", {T1,
+                        child->scope.first->setItem("self", {id->realType = T1,
                             std::any(), true, false, ++variableNum});
-                    id->realType = T1;
                     id->variableID = variableNum;
                     T.name = TypeName::METHOD;
                     T.SelfPtr = &child->scope.first->getItem("self").type;
                 }
             }
-            if (!child->children[0]->children.empty() && child->children[0]->children[0]->type == astNodeType::SELF)
-            {
-                T.SelfPtr = &SelfType;
-            }
+            unsigned long long funcId = 1;
+            if (node->type == astNodeType::PROGRAM && child->value == "main")
+                funcId = 1;
+            else
+                funcId = ++variableNum;
             node->scope.first->setItem(child->value,
-                {T, std::any(), false, true, ++variableNum});
-            child->variableID = variableNum;
+                {T, std::any(), false, true, funcId});
+            child->variableID = funcId;
         }
 
     // resolve struct dependency
@@ -971,6 +971,9 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 {
                     if (T0.type.selfMutable && !node->isMutable && node->isVariable)
                         throw compileError();
+                    std::cerr<<*T0.type.SelfPtr<<std::endl;
+                    if (T0.type.SelfPtr->name == TypeName::REF || T0.type.SelfPtr->name == TypeName::MUT_REF)
+                        node->children[0]->autoDerefCount --;
                     T0.type.name = TypeName::FUNCTION;
                     T0.type.SelfPtr = nullptr;
                     node->variableID = T0.ID;
@@ -1359,6 +1362,7 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         node->realType = R.type;
         node->isMutable = R.isMutable;
         node->isVariable = true;
+        node->variableID = R.ID;
     }
 }
 

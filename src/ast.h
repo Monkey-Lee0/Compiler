@@ -38,7 +38,7 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Type&);
 };
 
-inline unsigned long long variableNum = 0;
+inline unsigned long long variableNum = 1;
 
 class scopeInfo final
 {
@@ -91,10 +91,10 @@ public:
     bool isMutable=false;
     bool isVariable=false;
     // used in IR
-    unsigned int autoDerefCount = 0;
+    int autoDerefCount = 0; // positive: auto deref; negative: auto ref
     std::string irResult;
     std::string irResultPtr;
-    astNode* selfPtr;
+    astNode* selfPtr = nullptr;
     std::string irResultLabel1;
     std::string irResultLabel2;
     astNode* loopPtr;

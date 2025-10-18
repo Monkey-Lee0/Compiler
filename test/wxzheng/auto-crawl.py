@@ -63,7 +63,8 @@ OUT_CPP.write_text(R"""#include "../../src/parser.h"
 #include "../../src/ir.h"
 #include<iostream>
 #include<fstream>
-#include <gtest/gtest.h>
+#include<gtest/gtest.h>
+#include<chrono>
 
 std::string openFile(std::string path)
 {
@@ -88,6 +89,8 @@ void runSemantic(std::string path)
 void runIr(std::string path)
 {
     const auto code=openFile(path);
+    auto las=std::chrono::time_point_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now()).time_since_epoch().count();
     auto node=parser(code).solve();
     semanticCheck(node);
     std::fstream fs("my.ll", std::ios::out);
@@ -95,8 +98,15 @@ void runIr(std::string path)
     for (const auto& t:irCode)
         fs<<t<<std::endl;
     fs<<std::endl;
+    auto now=std::chrono::time_point_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now()).time_since_epoch().count();
+    std::cerr<<"my time: "<<now-las<<" ms"<<std::endl;
+    las=now;
     auto cl=system("clang -S --target=riscv32-unknown-elf -march=rv32gc -mabi=ilp32d"\
                    " -O0 my.ll -o my.s");
+    now=std::chrono::time_point_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now()).time_since_epoch().count();
+    std::cerr<<"clang time: "<<now-las<<" ms"<<std::endl;
     if (cl)
         throw compileError();
 }

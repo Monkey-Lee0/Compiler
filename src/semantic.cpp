@@ -952,10 +952,18 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
                 node->children[0]->autoDerefCount ++;
             }
             if (T.name == TypeName::ARRAY && node->children[1]->value == "len") // .len
+            {
                 node->realType = {TypeName::FUNCTION, &USIZE, 0};
+                node->variableID = 6;
+            }
             else if ((T == U32 || T == USIZE || T == UINT || T == INT) &&
                 node->children[1]->value == "to_string")
+            {
+                if (node->children[0]->eval.has_value() && node->father->type == astNodeType::FUNCTION_CALL)
+                    node->father->eval = std::to_string(std::any_cast<long long>(node->children[0]->eval));
                 node->realType = {TypeName::FUNCTION, &STRING, 0};
+
+            }
             else
             {
                 if (T.name != TypeName::STRUCT || node->children[1]->type != astNodeType::IDENTIFIER)
@@ -1227,7 +1235,10 @@ void updateSemanticState(astNode* node, astNode* father, astNode* loopPtr, astNo
         }
     }
     else if (node->type == astNodeType::STRING_LITERAL)
+    {
         node->realType = REF_STR;
+        node->eval = node->value;
+    }
     else if (node->type == astNodeType::EXPRESSION_STATEMENT)
     {
         if (node->children.empty())
@@ -1387,7 +1398,7 @@ void loadBuiltinSemantic(astNode* node)
     T.typePtr = &STRING;
     node->scope.first->setItem("getString", {T, std::any(), false, true, 0});
 
-    variableNum = 5;
+    variableNum = 6;
 }
 
 void semanticCheck(astNode* node)

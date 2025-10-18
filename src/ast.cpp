@@ -178,7 +178,7 @@ std::vector<std::string> astNode::showSelf() const
         res.back().append(" : "+value);
     if (realType.name != TypeName::ILLEGAL)
         res.back().append("   type:"+realType.to_string());
-    if (eval.has_value())
+    if (eval.has_value() && showAny(realType, eval).size() <= 50)
     {
         res.back().append("   eval:");
         res.back().append(showAny(realType, eval));
@@ -189,7 +189,7 @@ std::vector<std::string> astNode::showSelf() const
         res.back().append(" %"+std::to_string(variableID));
     if (autoDerefCount)
         res.back().append(" autoDerefCount:"+std::to_string(autoDerefCount));
-    if (!irResult.empty())
+    if (!irResult.empty() && irResult.size() <= 50)
         res.back().append(" irResult:"+irResult);
     return res;
 }

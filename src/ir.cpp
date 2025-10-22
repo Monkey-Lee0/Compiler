@@ -835,7 +835,7 @@ void updateIrState(astNode* node, astNode* root)
                 auto child = node->children[0]->children[i];
                 node->irCode.emplace_back(&child->irCode);
                 node->irCode.emplace_back("%v"+std::to_string(++variableNum)+" = getelementptr "+
-                    typeToIrString(child->realType)+", ptr "+node->irResultPtr+", i32 "+
+                    typeToIrString(node->realType)+", ptr "+node->irResultPtr+", i32 0, i32 "+
                     std::to_string(i));
                 llvmStore(node->irCode, "%v"+std::to_string(variableNum), child->irResult, child->realType);
             }
@@ -849,7 +849,7 @@ void updateIrState(astNode* node, astNode* root)
                 for (int i=0; i<len; i++) // brute force for small one.
                 {
                     node->irCode.emplace_back("%v"+std::to_string(++variableNum)+" = getelementptr "+
-                        typeToIrString(child->realType)+", ptr "+node->irResultPtr+", i32 "+
+                        typeToIrString(node->realType)+", ptr "+node->irResultPtr+", i32 0, i32 "+
                         std::to_string(i));
                     llvmStore(node->irCode, "%v"+std::to_string(variableNum), child->irResult,
                         child->realType);
@@ -880,7 +880,7 @@ void updateIrState(astNode* node, astNode* root)
                 node->irCode.emplace_back(std::string("dent in"));
                 auto elementVar = "%v"+std::to_string(++variableNum);
                 node->irCode.emplace_back(elementVar+" = getelementptr "+typeToIrString(node->realType)+
-                    ", ptr "+node->irResultPtr+", i32 "+loadLoopVar);
+                    ", ptr "+node->irResultPtr+", i32 0, i32 "+loadLoopVar);
                 llvmStore(node->irCode, elementVar, child->irResult, child->realType);
                 auto newLoopVar = "%v"+std::to_string(++variableNum);
                 node->irCode.emplace_back(newLoopVar+" = add i32 "+loadLoopVar+", 1");
@@ -906,7 +906,7 @@ void updateIrState(astNode* node, astNode* root)
             auto tp = *realT.members[id];
             node->irCode.emplace_back(&child->children[0]->irCode);
             node->irCode.emplace_back("%v"+std::to_string(++variableNum)+" = getelementptr "+
-                node->children[0]->irResult+", ptr "+node->irResultPtr+", i32 "+std::to_string(id));
+                node->children[0]->irResult+", ptr "+node->irResultPtr+", i32 0, i32 "+std::to_string(id));
             llvmStore(node->irCode, "%v"+std::to_string(variableNum),
                 child->children[0]->irResult, tp);
         }
@@ -919,7 +919,7 @@ void updateIrState(astNode* node, astNode* root)
 
         node->irCode.emplace_back(node->irResultPtr+" = getelementptr "+
             typeToIrString(node->children[0]->realType)+", ptr "+
-            node->children[0]->irResultPtr+", i32 "+node->children[1]->irResult);
+            node->children[0]->irResultPtr+", i32 0, i32 "+node->children[1]->irResult);
         if (isBigType(node->realType))
             node->irResult = node->irResultPtr;
         else
@@ -1017,7 +1017,7 @@ std::vector<std::string> trimString(const std::vector<std::string> &code)
 std::vector<std::any> loadBuiltinIr()
 {
     std::vector<std::any> res;
-    res.emplace_back(std::string("target triple = \"riscv32-unknown-unknown-elf\""));
+    res.emplace_back(std::string("target triple = \"x86_64-unknown-linux-gnu\""));
     res.emplace_back(std::string("declare void @llvm.memcpy.p0.p0.i32(ptr, ptr, i32, i1)"));
     res.emplace_back(std::string("@.str = private unnamed_addr constant [3 x i8] c\"%d\\00\", align 1"));
     res.emplace_back(std::string("@.str.1 = private unnamed_addr constant [4 x i8] c\"%d\\0A\\00\", align 1"));
@@ -1032,12 +1032,12 @@ std::vector<std::any> loadBuiltinIr()
     res.emplace_back(std::string("  %call = tail call noundef i32 (ptr, ...) @printf(ptr noundef nonnull @.str.1, i32 noundef %x)"));
     res.emplace_back(std::string("  ret void"));
     res.emplace_back(std::string("}"));
-    res.emplace_back(std::string("define dso_local void @getInt(i32 noundef %x) local_unnamed_addr {"));
+    res.emplace_back(std::string("define dso_local i32 @getInt() local_unnamed_addr {"));
     res.emplace_back(std::string("entry:"));
-    res.emplace_back(std::string("  %x.addr = alloca i32, align 4"));
-    res.emplace_back(std::string("  store i32 %x, ptr %x.addr, align 4"));
-    res.emplace_back(std::string("  %call = call noundef i32 (ptr, ...) @scanf(ptr noundef nonnull @.str, ptr noundef nonnull %x.addr)"));
-    res.emplace_back(std::string("  ret void"));
+    res.emplace_back(std::string("  %addr = alloca i32"));
+    res.emplace_back(std::string("  %call = call noundef i32 (ptr, ...) @scanf(ptr noundef nonnull @.str, ptr noundef nonnull %addr)"));
+    res.emplace_back(std::string("  %result = load i32, ptr %addr"));
+    res.emplace_back(std::string("  ret i32 %result"));
     res.emplace_back(std::string("}"));
     res.emplace_back(std::string("declare noundef i32 @scanf(ptr noundef, ...) local_unnamed_addr"));
     res.emplace_back(std::string("declare void @exit(i32 noundef) local_unnamed_addr"));

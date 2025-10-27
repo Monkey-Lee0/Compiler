@@ -21,7 +21,7 @@ else:
 
 os.chdir(LOCAL_DIR)
 
-# ---------- 2. 复制 *.rx → testcases/*.in
+# ---------- 2. 复制 *.rx/.in/.out → testcases/*.rx/.in/.out
 OUT_TC.mkdir(parents=True, exist_ok=True)  # parents=True 是关键
 rx_files = list(Path(".").rglob("*.rx"))
 seen = set()
@@ -31,9 +31,33 @@ for rx in rx_files:
     if rel in seen:
         continue
     seen.add(rel)
-    dst = OUT_TC / f"{rel}.in"
+    dst = OUT_TC / f"{rel}.rx"
     shutil.copy2(rx, dst)
 print(f">>> 已复制 {len(seen)} 个 .rx → {OUT_TC}")
+
+rx_files = list(Path(".").rglob("*.in"))
+seen = set()
+for rx in rx_files:
+    # 去重命名：用相对路径 _ 替换 /
+    rel = rx.stem
+    if rel in seen:
+        continue
+    seen.add(rel)
+    dst = OUT_TC / f"{rel}.in"
+    shutil.copy2(rx, dst)
+print(f">>> 已复制 {len(seen)} 个 .in → {OUT_TC}")
+
+rx_files = list(Path(".").rglob("*.out"))
+seen = set()
+for rx in rx_files:
+    # 去重命名：用相对路径 _ 替换 /
+    rel = rx.stem
+    if rel in seen:
+        continue
+    seen.add(rel)
+    dst = OUT_TC / f"{rel}.out"
+    shutil.copy2(rx, dst)
+print(f">>> 已复制 {len(seen)} 个 .out → {OUT_TC}")
 
 # ---------- 3. 生成 all_tests.cpp ----------
 jsons = list(Path(".").rglob("testcase_info.json"))
@@ -47,7 +71,7 @@ for jf in Path(".").rglob("testcase_info.json"):
         continue
     case  = rel_path.name
     code  = data.get("compileexitcode", 0)
-    inp   = f"{case}.in"
+    inp   = f"../../../test/wxzheng/testcases/{case}"
     expect = "EXPECT_NO_THROW" if code == 0 else "EXPECT_ANY_THROW"
 
     blocks[jf] = f"TEST({suite}, {case}) {{\n" \
@@ -68,7 +92,7 @@ OUT_CPP.write_text(R"""#include "../../src/parser.h"
 
 std::string openFile(std::string path)
 {
-    path="../../../test/wxzheng/testcases/"+path;
+    path = path+".rx";
     freopen(path.c_str(),"r",stdin);
     int in;
     std::string code;
@@ -102,13 +126,28 @@ void runIr(std::string path)
         std::chrono::system_clock::now()).time_since_epoch().count();
     std::cerr<<"my time: "<<now-las<<" ms"<<std::endl;
     las=now;
-    auto cl=system("clang -S --target=riscv32-unknown-elf -march=rv32gc -mabi=ilp32d"\
-                   " -O0 my.ll -o my.s");
+    auto cl=system("clang --target=x86_64-unknown-linux-gnu -march=x86-64 -O0 my.ll -o my");
     now=std::chrono::time_point_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now()).time_since_epoch().count();
     std::cerr<<"clang time: "<<now-las<<" ms"<<std::endl;
     if (cl)
         throw compileError();
+    las=now;
+    cl=system(("./my > my.out < "+path+".in").c_str());
+    now=std::chrono::time_point_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now()).time_since_epoch().count();
+    std::cerr<<"run time: "<<now-las<<" ms"<<std::endl;
+    if (WIFSIGNALED(cl))
+    {
+        std::cerr<<"Runtime Error"<<std::endl;
+        throw compileError();
+    }
+    cl=system(("diff my.out "+path+".out -w").c_str());
+    if (cl)
+    {
+        std::cerr<<"Wrong Answer"<<std::endl;
+        throw compileError();
+    }
 }
 
 """

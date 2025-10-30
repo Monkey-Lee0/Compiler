@@ -172,6 +172,7 @@ void updateIrState(astNode* node, astNode* root)
     if (node->type == astNodeType::FUNCTION)
     {
         node->irResultLabel1 = "%v"+std::to_string(++variableNum);
+        node->irResultPtr = "%v"+std::to_string(++variableNum);
     }
 
     for (const auto child:node->children)
@@ -217,8 +218,19 @@ void updateIrState(astNode* node, astNode* root)
         else if (node->variableID == 5)
             node->irResult = "define " + node->children[1]->irResult + " @getInt("+node->children[0]->irResult + ")";
         else
-            node->irResult = "define " + typeToIrStringPtr(node->children[1]->realType) + " @f" +
-                std::to_string(node->variableID) + "(" + node->children[0]->irResult + ")";
+        {
+            if (isBigType(typeToItem(node->children[1]->realType)))
+            {
+                if (!node->children[0]->irResult.empty())
+                    node->children[0]->irResult += ", ";
+                node->children[0]->irResult += "ptr "+node->irResultPtr;
+                node->irResult = "define void @f" + std::to_string(node->variableID) +
+                    "(" + node->children[0]->irResult + ")";
+            }
+            else
+                node->irResult = "define " + typeToIrString(node->children[1]->realType) + " @f" +
+                    std::to_string(node->variableID) + "(" + node->children[0]->irResult + ")";
+        }
         node->irCode.emplace_back(node->irResult);
         node->irCode.emplace_back(std::string("{"));
         node->irCode.emplace_back(node->irResultLabel1.substr(1)+":");
@@ -231,6 +243,12 @@ void updateIrState(astNode* node, astNode* root)
         {
             if (T == UNIT)
                 node->irCode.emplace_back(std::string("ret void"));
+            else if (isBigType(T))
+            {
+                llvmStore(node->irCode, node->irResultPtr,
+                    node->children[2]->irResult, node->children[2]->realType);
+                node->irCode.emplace_back(std::string("ret void"));
+            }
             else
                 node->irCode.emplace_back("ret "+typeToIrStringPtr(T)+" "+node->children[2]->irResult);
         }
@@ -512,6 +530,13 @@ void updateIrState(astNode* node, astNode* root)
     {
         if (node->children.empty())
             node->irCode.emplace_back(std::string("ret void"));
+        else if (isBigType(node->children[0]->realType))
+        {
+            node->irCode.emplace_back(&node->children[0]->irCode);
+            llvmStore(node->irCode, node->fnPtr->irResultPtr,
+                node->children[0]->irResult, node->children[0]->realType);
+            node->irCode.emplace_back(std::string("ret void"));
+        }
         else
         {
             node->irCode.emplace_back(&node->children[0]->irCode);
@@ -766,23 +791,36 @@ void updateIrState(astNode* node, astNode* root)
                 groupResult = ", "+groupResult;
             groupResult = typeToIrStringPtr(selfPtr->realType)+" "+selfPtr->irResult+groupResult;
         }
-        if (node->children[0]->variableID == 6)
+        if (isBigType(node->realType))
         {
-            node->irResult = std::to_string(selfPtr->realType.len);
-        }
-        else if (node->realType != UNIT)
-        {
-            node->irResult = "%v"+std::to_string(node->variableID);
-            if (isBigType(node->realType))
-                node->irResultPtr = node->irResult;
-            node->irCode.emplace_back(node->irResult+" = call "+
-                typeToIrStringPtr(node->realType)+" "+node->children[0]->irResult+"("+groupResult+")");
+            node->irResultPtr = node->irResult = "%v"+std::to_string(++variableNum);
+            if (!groupResult.empty())
+                groupResult += ", ";
+            groupResult +="ptr "+node->irResult;
+            node->irCode.emplace_back(node->irResult+" = alloca "+typeToIrString(node->realType));
+            node->irCode.emplace_back("call void "+node->children[0]->irResult+"("+groupResult+")");
         }
         else
         {
-            node->irResult = "()";
-            node->irCode.emplace_back("call void "+node->children[0]->irResult+"("+groupResult+")");
+            if (node->children[0]->variableID == 6)
+            {
+                node->irResult = std::to_string(selfPtr->realType.len);
+            }
+            else if (node->realType != UNIT)
+            {
+                node->irResult = "%v"+std::to_string(node->variableID);
+                if (isBigType(node->realType))
+                    node->irResultPtr = node->irResult;
+                node->irCode.emplace_back(node->irResult+" = call "+
+                    typeToIrStringPtr(node->realType)+" "+node->children[0]->irResult+"("+groupResult+")");
+            }
+            else
+            {
+                node->irResult = "()";
+                node->irCode.emplace_back("call void "+node->children[0]->irResult+"("+groupResult+")");
+            }
         }
+
     }
     else if (node->type == astNodeType::IDENTIFIER)
     {
@@ -811,10 +849,8 @@ void updateIrState(astNode* node, astNode* root)
         {
             node->irResultPtr = "%v"+std::to_string(node->variableID);
             if (!isBigType(node->realType))
-            {
-                node->irResult = "%v"+std::to_string(++variableNum);
-                llvmLoad(node->irCode, node->irResult, node->irResultPtr, node->realType);
-            }
+                llvmLoad(node->irCode, node->irResult = "%v"+std::to_string(++variableNum),
+                    node->irResultPtr, node->realType);
             else
                 node->irResult = node->irResultPtr;
         }
